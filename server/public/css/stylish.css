@@ -1,0 +1,126 @@
+head, body {
+  /* font-family: "Raleway", sans-serif; */
+  /* font-family: 'Kite One', sans-serif; */
+  /* font-family: 'Rajdhani', sans-serif; */
+  font-family: 'Dosis', sans-serif;
+  font-size: 25px;
+  width: 100vw;
+  height: 100vh;
+
+  margin: 0;
+  padding: 0;
+
+  color: #ffc786;
+  /*This is a cool colour, don't get me wrong but as the main UI it doesn't work right now*/
+  /* background-color: #FFDCB5;  */
+  background-color: #333;
+}
+
+a, 
+a:visited,
+a:hover {
+  position: relative;
+
+  background: none;
+  border: none;
+  outline: 0;
+  
+  color: inherit;
+  font-family: inherit;
+  font-size: 20px;
+  font-weight: 400;
+  text-decoration: none; 
+}
+
+a::after,
+input[type=submit]::after {
+  height: 0%;
+  width: 0%;
+
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  box-sizing: inherit;
+  border: 1px solid transparent;
+  
+  transition: width 0.5s ease, height 0.5s ease,
+  border-color 0.5s ease-in-out;
+}
+
+ul a:hover {
+  cursor: pointer;
+}
+
+ul a::after {
+  border: 0.75px solid transparent;
+}
+
+a:hover::after,
+input[type=submit]:hover::after {
+  width: 100%;
+
+  border-color: #F1A934;
+  cursor: pointer;    
+}
+
+input {
+  position: relative;
+
+  border: none;
+  outline: 0;
+  
+  background-color: inherit;
+  color: inherit;
+}
+
+textarea,
+input[type=text] {
+  border: none;
+  border-bottom: 1px #ccc solid;
+  transition: border-color 0.5s ease, border-bottom-width 0.5s ease;
+}
+
+textarea:focus, 
+input[type=text]:focus { 
+  border-color: #ffc786;
+  outline: none;
+}
+
+textarea {
+  color: inherit;
+  background: transparent;
+  text-align: center;
+}
+
+title {
+  text-transform: capitalize;
+}
+
+ul {
+  list-style: none;
+  color: #ddd;
+}
+
+.padless {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.left {
+  justify-content: flex-start;
+  text-align: left;
+  align-items: center; 
+}
+
+.middle {
+  justify-content: center;
+  align-items: center; 
+  text-align: center;
+}
+
+.right {
+  justify-content: flex-end;
+  text-align: right;
+  align-items: center; 
+}
