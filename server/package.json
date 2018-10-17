@@ -1,0 +1,12 @@
+{
+  "name": "server",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "start": "clear; node server.js"
+  },
+  "dependencies": {
+    "cookie-parser": "~1.4.3",
+    "express": "~4.16.0"
+  }
+}
