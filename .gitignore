@@ -1,4 +1,3 @@
-data
-venv*
-node_modules/
-.netlify
+venv/
+data/
+Offline/
