@@ -10,17 +10,24 @@ import pandas as pd
 class ParseXML():
     def __init__(self, fileName):
         self.data = etree.parse(fileName)
-        pprint(self.data)
 
-    def parseRoot(self):
-        """Return a list of dictionaries from the text
-         and attributes of the children under this XML root."""
-        return [self.parseElement(child) for child in iter(self.data)]
+    @staticmethod
+    def convertXML(fileName="", idField="Id"):
+        data = etree.parse(fileName)
+        dataAsDict = []
+        for i, child in enumerate(data.getroot()):
+            entry = {}
+            entry[child.attrib[idField]] = child.attrib
+            dataAsDict.append(child.attrib)
+
+        df = pd.DataFrame(dataAsDict)
+
+        return df
 
     """
     Modified from https://gist.github.com/mattmc3/712f280ec81044ec7bd12a6dda560787
     """
-    def xml2df(self, idField="Id"):
+    def convert(self, idField="Id"):
         dataAsDict = []
         for i, child in enumerate(self.data.getroot()):
             entry = {}
@@ -38,7 +45,8 @@ class ParseXML():
 
 def main():
     hi = ParseXML("../data/worldbuilding.stackexchange.com/Users.xml")
-    df = hi.xml2df()
+    df = hi.convert()
+    df2 = ParseXML.convertXML("../data/worldbuilding.stackexchange.com/Posts.xml")
 
     pprint(df.iloc[2])
 
