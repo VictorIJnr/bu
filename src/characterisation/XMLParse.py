@@ -1,19 +1,43 @@
-from xml.dom import minidom
 import xml.etree.ElementTree as etree
 
 import io
+import os
 
 from pprint import pprint
 
 import pandas as pd
 
+buPath = os.path.dirname(__file__)
+
 class ParseXML():
-    def __init__(self, fileName):
-        self.data = etree.parse(fileName)
+    def __init__(self, filePath):
+        filePath = os.path.join(buPath, filePath)
+        self.data = etree.parse(filePath)
 
     @staticmethod
-    def convertXML(fileName="", idField="Id"):
-        data = etree.parse(fileName)
+    def convertAll(dirPath=""):
+        dfs = []
+        for fileName in os.listdir(os.path.join(buPath, dirPath)):
+            dfs.append(ParseXML.convertXML(os.path.join(dirPath, fileName)))
+
+        return dfs
+
+    @staticmethod
+    def convertAllToCSV(dirPath=""):
+        dfs = []
+        for fileName in os.listdir(os.path.join(buPath, dirPath)):
+            df = ParseXML.convertXML(os.path.join(dirPath, fileName))
+            dfs.append(df)
+            ParseXML.dfToCSV(df, fileName, dirPath)
+
+        return dfs
+
+    @staticmethod
+    def convertXML(filePath="", idField="Id"):
+        pprint("Converting " + filePath + " to a dataFrame.")
+
+        filePath = os.path.join(buPath, filePath)
+        data = etree.parse(filePath)
         dataAsDict = []
         for i, child in enumerate(data.getroot()):
             entry = {}
@@ -23,6 +47,11 @@ class ParseXML():
         df = pd.DataFrame(dataAsDict)
 
         return df
+    
+    @staticmethod
+    def dfToCSV(df, fileName, filePath):
+        pprint("Converting " + fileName + " into a csv")
+        df.to_csv(os.path.join(filePath, fileName)[3:-3] + "csv")
 
     """
     Modified from https://gist.github.com/mattmc3/712f280ec81044ec7bd12a6dda560787
@@ -37,18 +66,14 @@ class ParseXML():
         df = pd.DataFrame(dataAsDict)
 
         return df
-
+    
 
     def processData(self):
         """ Initiate the root XML, parse it, and return a dataframe"""
         return pd.DataFrame(list(self.iter_docs(self.data.getroot())))
 
 def main():
-    hi = ParseXML("../data/worldbuilding.stackexchange.com/Users.xml")
-    df = hi.convert()
-    df2 = ParseXML.convertXML("../data/worldbuilding.stackexchange.com/Posts.xml")
-
-    pprint(df.iloc[2])
+    dfs = ParseXML.convertAllToCSV("../../data/worldbuilding.stackexchange.com/")
 
 
 if __name__ == "__main__":
