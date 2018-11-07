@@ -1,6 +1,5 @@
 import xml.etree.ElementTree as etree
 
-import io
 import os
 
 from pprint import pprint
@@ -73,7 +72,7 @@ class ParseXML():
         return pd.DataFrame(list(self.iter_docs(self.data.getroot())))
 
 def main():
-    dfs = ParseXML.convertAllToCSV("../../data/worldbuilding.stackexchange.com/")
+    dfs = ParseXML.convertAllToCSV("../../data/serverfault.com/")
 
 
 if __name__ == "__main__":
