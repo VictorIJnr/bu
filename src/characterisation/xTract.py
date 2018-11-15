@@ -83,7 +83,7 @@ def avgSentenceChars(doc):
 """
 Returns the frequency of all the stop words
 """
-def stopWordFreq(wordCounts, stopWords):
+def stopWordFreq(wordCounts, stopWords=loadStopWords()):
     stopCounter = defaultdict(lambda: -1)
 
     #Add all stop words to the counter, after which, all their counts will be 0
@@ -99,19 +99,57 @@ def stopWordFreq(wordCounts, stopWords):
 def loadStopWords():
     return [line.rstrip("\n") for line in open(os.path.join(buPath, "stopwords.txt"))]
 
+def getWordCounts(doc):
+    words = [token.text for token in doc if token.is_punct == False]
+    return Counter(words)
+
 def main():
     postDF = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPosts.csv"))
     body = re.sub(re.compile("<.*?>|\r?\n|\r"), "", postDF.iloc[1]["Body"])
     doc = spacy(body)
     stopWords = loadStopWords()
     
-    words = [token.text for token in doc if token.is_punct == False]
-    wordCounts = Counter(words)
+    wordCounts = getWordCounts(doc)
     print(f"Total number of words:\t{totalNumWords(doc)}")
     print(f"Total number of characters:\t{totalNumChars(doc)}")
     print(f"Average Number of Words in a Sentence:\t{avgSentenceWords(doc)}")
     print(f"Average Number of Characters in a Sentence:\t{avgSentenceChars(doc)}\n")
     [print(sentence) for sentence in doc.sents]
 
+def runExtraction(fileName):
+    dfCols = ["userID", "postID", "metaFreq", "numWords", "numChars", "yule",
+                "hapaxLego", "disLego", "trisLego", "avgSentenceWords",
+                "avgSentenceChars", "stopWordFreq"]
+    nonNormalised = pd.DataFrame(columns=dfCols)
+
+    fileDF = pd.read_csv(os.path.join(dataPath, dataset, fileName))
+    stopWords = loadStopWords()
+
+    for index, row in fileDF.iterrows():
+        sys.stdout.write(f"Progress:\t{(index / fileDF.shape[0]) * 100:.3f}%")
+        sys.stdout.flush()
+        doc = spacy(row["body"])
+        wordCounts = getWordCounts(doc)
+        rowDict = dict.fromkeys(dfCols)
+        
+        rowDict["userID"] = row["OwnerUserId"]
+        rowDict["postID"] = row["Id"]
+        rowDict["metaFreq"] = metaFrequencies(wordCounts)
+        rowDict["numWords"] = totalNumWords(doc)
+        rowDict["numChars"] = totalNumChars(doc)
+        rowDict["yule"] = yuleify(wordCounts)
+        rowDict["hapaxLego"] = legomena(wordCounts)
+        rowDict["disLego"] = legomena(wordCounts, 2)
+        rowDict["trisLego"] = legomena(wordCounts, 3)
+        rowDict["avgSentenceWords"] = avgSentenceWords(doc)
+        rowDict["avgSentenceChars"] = avgSentenceChars(doc)
+        rowDict["stopWordFreq"] = stopWordFreq(wordCounts)
+
+        fileDF.append(rowDict, sort=True)
+    
+    fileDF.to_csv(os.path.join(filePath, fileName)[3:-4] + "Extracted.csv")
+        
+
 if __name__ == "__main__":
-    main()
+    # main()
+    runExtraction("RestrictedPosts.csv")

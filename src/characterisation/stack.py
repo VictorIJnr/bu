@@ -15,23 +15,29 @@ serverfault = "serverfault.com"
 
 spacy = sp.load("en")
 
-dataset = serverfault
+dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "data")
 
+print("Loading data into dataframe...")
 postDF = pd.read_csv(os.path.join(dataPath, dataset, "Posts.csv"))
 commentDF = pd.read_csv(os.path.join(dataPath, dataset, "Comments.csv"))
+
+def cleanBody(df, index, row):
+    oldBody = row["Body"]
+    cleaner = re.compile("<.*?>|\r?\n|\r")
+    df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
 def restrict(df, limit=5):
     global postDF
     userDict = defaultdict(lambda: 0)
-    """
     for index, row in df.iterrows():
         sys.stdout.write(f"Progress:\t{(index / postDF.shape[0]) * 100:.3f}%\r")
         sys.stdout.flush()
         
         #If the post by the user is an answer
         if (row["PostTypeId"] == 2):
+            cleanBody(df, index, row)
             userDict[row["OwnerUserId"]] += 1
         #If the post is a question extra conditions must be met 
         elif (row["PostTypeId"] == 1):
@@ -47,14 +53,20 @@ def restrict(df, limit=5):
             #Only if the question creator has a sufficient amount of comments under
             #their question, are they considered to have enough data
             if count > limit:
+                cleanBody(df, index, row)
                 userDict[row["OwnerUserId"]] += 1
-    """
-    for index, row in df.iterrows():
+                
+        """     
+        for index, row in df.iterrows():
         sys.stdout.write(f"Progress:\t{(index / df.shape[0]) * 100:.3f}%\r")
         sys.stdout.flush()
 
-        userDict[row["OwnerUserId"]] += 1
+        oldBody = row["Body"]
+        cleaner = re.compile("<.*?>|\r?\n|\r")
+        df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
+        userDict[row["OwnerUserId"]] += 1 
+        """
     print(f"Number of pre-filtered users:\t{len(userDict)}")
     
     userDict = {user: count for (user, count) in userDict.items() if count >= limit}
@@ -62,9 +74,6 @@ def restrict(df, limit=5):
     print(f"Number of filtered users:\t{len(userDict)}\n")
 
     newDF = df.query("OwnerUserId in @userDict.keys()")
-
-    cleaner = re.compile("<.*?>")
-    newDF["Body"].apply(lambda body: re.sub(cleaner, '', str(body)))
 
     return newDF, userDict
 
@@ -76,7 +85,7 @@ def main():
     print(f"Number of Users:\t{len(allUsers)}")
     print(f"Filtered Posts size:\t{postDF.shape[0]}")
 
-    postDF.to_csv(os.path.join(dataPath, dataset, "RestrictedPosts.csv"))
+    postDF.to_csv(os.path.join(dataPath, dataset, "RestrictedPosts2.csv"))
 
 if __name__ == "__main__":
     main()
