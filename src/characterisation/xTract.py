@@ -126,8 +126,8 @@ def runExtraction(fileName):
     stopWords = loadStopWords()
 
     for index, row in fileDF.iterrows():
-        sys.stdout.write(f"Progress:\t{(index / fileDF.shape[0]) * 100:.3f}%\r")
-        sys.stdout.flush()
+        print(f"Extracting Index {index} out of {fileDF.shape[0]} "
+            + f"({(index / fileDF.shape[0]) * 100:.3f}%)\r", end="\r")
         doc = spacy(str(row["Body"]))
         wordCounts = getWordCounts(doc)
         rowDict = dict.fromkeys(dfCols)
