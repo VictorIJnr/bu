@@ -80,6 +80,9 @@ def avgSentenceChars(doc):
     numSentences = sum(1 for _ in doc.sents) #Counting the number of sentences in the text
     return totalNumChars(doc) / numSentences
 
+def loadStopWords():
+    return [line.rstrip("\n") for line in open(os.path.join(buPath, "stopwords.txt"))]
+
 """
 Returns the frequency of all the stop words
 """
@@ -95,9 +98,6 @@ def stopWordFreq(wordCounts, stopWords=loadStopWords()):
             stopCounter[key] = value
 
     return stopCounter
-
-def loadStopWords():
-    return [line.rstrip("\n") for line in open(os.path.join(buPath, "stopwords.txt"))]
 
 def getWordCounts(doc):
     words = [token.text for token in doc if token.is_punct == False]
@@ -126,9 +126,9 @@ def runExtraction(fileName):
     stopWords = loadStopWords()
 
     for index, row in fileDF.iterrows():
-        sys.stdout.write(f"Progress:\t{(index / fileDF.shape[0]) * 100:.3f}%")
+        sys.stdout.write(f"Progress:\t{(index / fileDF.shape[0]) * 100:.3f}%\r")
         sys.stdout.flush()
-        doc = spacy(row["body"])
+        doc = spacy(str(row["Body"]))
         wordCounts = getWordCounts(doc)
         rowDict = dict.fromkeys(dfCols)
         
@@ -145,9 +145,9 @@ def runExtraction(fileName):
         rowDict["avgSentenceChars"] = avgSentenceChars(doc)
         rowDict["stopWordFreq"] = stopWordFreq(wordCounts)
 
-        fileDF.append(rowDict, sort=True)
+        fileDF.append(rowDict, ignore_index=True, sort=True)
     
-    fileDF.to_csv(os.path.join(filePath, fileName)[3:-4] + "Extracted.csv")
+    fileDF.to_csv(os.path.join(filePath, fileName[:-4] + "Extracted.csv")[3:])
         
 
 if __name__ == "__main__":

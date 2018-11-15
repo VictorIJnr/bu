@@ -30,7 +30,23 @@ def cleanBody(df, index, row):
 
 def restrict(df, limit=5):
     global postDF
+    userDict = preRestriction(df, limit)
+    # userDict = miniPreRestriction(df)
+
+    initNumUsers = len(userDict)
+    print(f"Number of pre-filtered users:\t{initNumUsers}")
+    
+    userDict = {user: count for (user, count) in userDict.items() if count >= limit}
+    print("\nGenerated the filtered user dictionary.")
+    print(f"Number of filtered users:\t{len(userDict)}\n")
+
+    newDF = df.query("OwnerUserId in @userDict.keys()")
+
+    return newDF, userDict, initNumUsers
+
+def preRestriction(df, limit=5):
     userDict = defaultdict(lambda: 0)
+
     for index, row in df.iterrows():
         sys.stdout.write(f"Progress:\t{(index / postDF.shape[0]) * 100:.3f}%\r")
         sys.stdout.flush()
@@ -55,9 +71,12 @@ def restrict(df, limit=5):
             if count > limit:
                 cleanBody(df, index, row)
                 userDict[row["OwnerUserId"]] += 1
-                
-        """     
-        for index, row in df.iterrows():
+    return userDict
+
+def miniPreRestriction(df):
+    userDict = defaultdict(lambda: 0)
+
+    for index, row in df.iterrows():
         sys.stdout.write(f"Progress:\t{(index / df.shape[0]) * 100:.3f}%\r")
         sys.stdout.flush()
 
@@ -66,26 +85,21 @@ def restrict(df, limit=5):
         df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
         userDict[row["OwnerUserId"]] += 1 
-        """
-    print(f"Number of pre-filtered users:\t{len(userDict)}")
-    
-    userDict = {user: count for (user, count) in userDict.items() if count >= limit}
-    print("\nGenerated the filtered user dictionary.")
-    print(f"Number of filtered users:\t{len(userDict)}\n")
-
-    newDF = df.query("OwnerUserId in @userDict.keys()")
-
-    return newDF, userDict
+    return userDict
 
 def main():
     global postDF
-    print(f"Initial Size:\t{postDF.shape[0]}")
+    initNumPosts = postDF.shape[0]
+    print(f"Initial number of Posts:\t{initNumPosts}")
 
-    postDF, allUsers = restrict(postDF)
+    postDF, allUsers, initNumUsers = restrict(postDF)
     print(f"Number of Users:\t{len(allUsers)}")
     print(f"Filtered Posts size:\t{postDF.shape[0]}")
 
-    postDF.to_csv(os.path.join(dataPath, dataset, "RestrictedPosts2.csv"))
+    print(f"\n{initNumUsers - len(allUsers)} removed users.")
+    print(f"{initNumPosts - postDF.shape[0]} removed posts.")
+
+    postDF.to_csv(os.path.join(dataPath, dataset, "RestrictedPosts.csv"))
 
 if __name__ == "__main__":
     main()
