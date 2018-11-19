@@ -17,12 +17,16 @@ x_test = np.reshape(x_test, (len(x_test), 28, 28, 1))
 inputText = Input(shape=(28, 28, 1))
 # inputText = Input(shape=(12,))
 x = Conv2D(3, (3, 3), activation="relu", padding="same")(inputText)
+# x = Conv1D(3, 3, activation="relu", padding="same")(inputText)
 encoded = MaxPooling2D(2, padding="same")(x)
+# encoded = MaxPooling1D(2, padding="same")(x)
 
 print("Encoding done")
 
 xDec = UpSampling2D(2)(encoded)
+# xDec = UpSampling1D(2)(encoded)
 decoded = Conv2D(1, (3, 3), activation="sigmoid", padding="same")(xDec)
+# decoded = Conv1D(1, 3, activation="sigmoid", padding="same")(xDec)
 print("Decoding done")
 
 convAuto = Model(inputText, decoded)

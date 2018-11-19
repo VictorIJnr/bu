@@ -147,7 +147,7 @@ def runExtraction(fileName):
 
         fileDF.append(rowDict, ignore_index=True, sort=True)
     
-    fileDF.to_csv(os.path.join(filePath, fileName[:-4] + "Extracted.csv")[3:])
+    fileDF.to_csv(os.path.join(dataPath, fileName[:-4] + "Extracted.csv")[3:])
         
 
 if __name__ == "__main__":
