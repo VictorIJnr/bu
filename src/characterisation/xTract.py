@@ -132,7 +132,7 @@ def runExtraction(fileName):
         wordCounts = getWordCounts(doc)
         rowDict = dict.fromkeys(dfCols)
         
-        rowDict["userID"] = row["OwnerUserId"]
+        rowDict["userID"] = row["OwnerUszerId"]
         rowDict["postID"] = row["Id"]
         rowDict["metaFreq"] = metaFrequencies(wordCounts)
         rowDict["numWords"] = totalNumWords(doc)
