@@ -14,6 +14,8 @@ worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
 
 spacy = sp.load("en")
+limitRows = False
+rowLimit = 256
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
@@ -89,6 +91,7 @@ def miniPreRestriction(df):
 
 def main():
     global postDF
+
     initNumPosts = postDF.shape[0]
     print(f"Initial number of Posts:\t{initNumPosts}")
 
@@ -99,7 +102,9 @@ def main():
     print(f"\n{initNumUsers - len(allUsers)} removed users.")
     print(f"{initNumPosts - postDF.shape[0]} removed posts.")
 
-    postDF.to_csv(os.path.join(dataPath, dataset, "RestrictedPosts.csv"))
+    postDF = postDF[:rowLimit] if limitRows else postDF
+    savePath = "miniPosts.csv" if limitRows else "RestrictedPosts.csv"
+    postDF.to_csv(os.path.join(dataPath, dataset, savePath))
 
 if __name__ == "__main__":
     main()

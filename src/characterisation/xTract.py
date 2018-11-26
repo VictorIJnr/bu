@@ -15,6 +15,8 @@ serverfault = "serverfault.com"
 
 spacy = sp.load("en")
 
+miniXtract = True
+
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "data")
@@ -103,6 +105,9 @@ def getWordCounts(doc):
     words = [token.text for token in doc if token.is_punct == False]
     return Counter(words)
 
+"""
+Chill out, this was just used for testing
+"""
 def main():
     postDF = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPosts.csv"))
     body = re.sub(re.compile("<.*?>|\r?\n|\r"), "", postDF.iloc[1]["Body"])
@@ -125,6 +130,7 @@ def runExtraction(fileName):
     fileDF = pd.read_csv(os.path.join(dataPath, dataset, fileName))
     stopWords = loadStopWords()
 
+    rowList = []
     for index, row in fileDF.iterrows():
         print(f"Extracting Index {index} out of {fileDF.shape[0]} "
             + f"({(index / fileDF.shape[0]) * 100:.3f}%)\r", end="\r")
@@ -132,7 +138,7 @@ def runExtraction(fileName):
         wordCounts = getWordCounts(doc)
         rowDict = dict.fromkeys(dfCols)
         
-        rowDict["userID"] = row["OwnerUszerId"]
+        rowDict["userID"] = row["OwnerUserId"]
         rowDict["postID"] = row["Id"]
         rowDict["metaFreq"] = metaFrequencies(wordCounts)
         rowDict["numWords"] = totalNumWords(doc)
@@ -145,11 +151,19 @@ def runExtraction(fileName):
         rowDict["avgSentenceChars"] = avgSentenceChars(doc)
         rowDict["stopWordFreq"] = stopWordFreq(wordCounts)
 
-        fileDF.append(rowDict, ignore_index=True, sort=True)
+        rowList.append(rowDict)
+        # nonNormalised.append(rowDict, ignore_index=True, sort=False)
+
+    retry = pd.DataFrame(rowList)
+    # print(nonNormalised)
+    pprint(retry)
     
     fileDF.to_csv(os.path.join(dataPath, dataset, fileName[:-4] + "Extracted.csv"))
         
 
 if __name__ == "__main__":
     # main()
-    runExtraction("RestrictedPosts.csv")
+    if miniXtract:
+        runExtraction("miniPosts.csv")
+    else:
+        runExtraction("RestrictedPosts.csv")
