@@ -2,6 +2,9 @@ venv/
 data/
 Offline/
 
+# No one needs the gitignore lockfile
+.gitignore~
+
 *.pyc
 # Byte-compiled / optimized / DLL files
 *__pycache__/*
