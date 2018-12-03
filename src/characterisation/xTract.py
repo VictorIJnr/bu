@@ -125,8 +125,6 @@ def runExtraction(fileName):
     dfCols = ["userID", "postID", "metaFreq", "numWords", "numChars", "yule",
                 "hapaxLego", "disLego", "trisLego", "avgSentenceWords",
                 "avgSentenceChars", "stopWordFreq"]
-    nonNormalised = pd.DataFrame(columns=dfCols)
-
     fileDF = pd.read_csv(os.path.join(dataPath, dataset, fileName))
     stopWords = loadStopWords()
 
@@ -152,13 +150,11 @@ def runExtraction(fileName):
         rowDict["stopWordFreq"] = stopWordFreq(wordCounts)
 
         rowList.append(rowDict)
-        # nonNormalised.append(rowDict, ignore_index=True, sort=False)
 
-    retry = pd.DataFrame(rowList)
-    # print(nonNormalised)
-    pprint(retry)
+    xTracted = pd.DataFrame(rowList)
+    pprint(xTracted)
     
-    fileDF.to_csv(os.path.join(dataPath, dataset, fileName[:-4] + "Extracted.csv"))
+    xTracted.to_csv(os.path.join(dataPath, dataset, fileName[:-4] + "Extracted.csv"))
         
 
 if __name__ == "__main__":
