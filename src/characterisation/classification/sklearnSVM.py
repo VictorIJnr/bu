@@ -42,7 +42,7 @@ def pullData():
     inputData = inputData.values
 
     #Fix this
-    trainData, trainIDs, testData, testIDs = train_test_split(inputData, userIDs,
+    trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
                                                 test_size=0.2, train_size=0.8)
 
     return trainData, trainIDs, testData, testIDs
@@ -58,14 +58,11 @@ def pullTopX(num=5):
 def initSVM():
     trainX, trainY, testX, testY = pullData()
 
-    print(trainX.shape)
-    print(trainY.shape)
-
     paramDist = {
         "kernel": ["linear", "poly", "rbf", "sigmoid"],
         "degree": list(range(6)),
         "gamma": ["auto", "scale", 0.01, 0.05, 0.1, 0.15, 0.2],
-        "coef0": np.linspace(0, 1, num=20),
+        "coef0": np.linspace(0, 1, num=21), #21 to accomodate for the endpoint (1)
         "shrinking": [True, False],
         "tol": [0.1, 0.01, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9]
     }
@@ -75,8 +72,8 @@ def initSVM():
     classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=5)
     # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
-    print(type(classy.cv_results_))
-    pprint(classy.cv_results_)
+    # print(type(classy.cv_results_))
+    # pprint(classy.cv_results_)
 
     #This is a bad way of retaining the test data... I'll find another way to fix this sometime
     #Huh, I just thought of one, pass the training parameters to this method instead
@@ -89,7 +86,7 @@ Runs experiments on each of the different methods to determine equivalence class
 def testEquiv():
     classy, testX, testY = initSVM()
 
-    classy.predict(testX, testY)
+    classy.predict(testX)
 
 if __name__ == "__main__":
     testEquiv()

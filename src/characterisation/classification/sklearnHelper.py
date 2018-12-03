@@ -7,11 +7,11 @@ from sklearn.model_selection import RandomizedSearchCV
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, cv=cv)
     
-    print("Pre fitting")
     start = time()
     model.fit(trainX, trainY)
 
-    print("Pre verbose")
+    print("") #Only keep this whilst I have all those stupid warnings
+
     if verbose:
         print(f"Parameter search took {time() - start:.2f} seconds to explore {searchNum}"
             + " possibilities")
