@@ -7,6 +7,7 @@ from pprint import pprint
 
 from .sklearnHelper import hyperSearch, report
 
+from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 
 worldbuilding = "worldbuilding.stackexchange.com"
@@ -27,26 +28,35 @@ def pullData():
     #Remove the userID column from the df
     #Use the userID column as the label column
     
-    trainData = None
+    inputData = None
     userIDs = None
 
     if miniData:    
-        trainData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
     else:
         pass
-    
     if limitFeatures:
-        trainData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
+        inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
 
-    userIDs = trainData.pop("userID").values
-    trainData = trainData.values
+    userIDs = inputData.pop("userID").values
+    inputData = inputData.values
 
-    print(type(userIDs))
-    print(type(trainData))
-    return trainData, userIDs
+    #Fix this
+    trainData, trainIDs, testData, testIDs = train_test_split(inputData, userIDs,
+                                                test_size=0.2, train_size=0.8)
+
+    return trainData, trainIDs, testData, testIDs
+
+"""
+This should retrieve the top x models found from the searching cross-validation
+These models will the all be tested against the different equivalence class methods
+(Jump Points, 95th Percentile of Users, Highest 90% of Scores)
+"""
+def pullTopX(num=5):
+    pass
 
 def initSVM():
-    trainX, trainY = pullData()
+    trainX, trainY, testX, testY = pullData()
 
     print(trainX.shape)
     print(trainY.shape)
@@ -68,5 +78,18 @@ def initSVM():
     print(type(classy.cv_results_))
     pprint(classy.cv_results_)
 
+    #This is a bad way of retaining the test data... I'll find another way to fix this sometime
+    #Huh, I just thought of one, pass the training parameters to this method instead
+    #So outside the method you still have the train/test split that you used.
+    return classy, testX, testY
+
+"""
+Runs experiments on each of the different methods to determine equivalence classes
+"""
+def testEquiv():
+    classy, testX, testY = initSVM()
+
+    classy.predict(testX, testY)
+
 if __name__ == "__main__":
-    initSVM()
+    testEquiv()
