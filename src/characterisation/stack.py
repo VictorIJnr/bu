@@ -15,7 +15,7 @@ serverfault = "serverfault.com"
 
 spacy = sp.load("en")
 limitRows = True
-rowLimit = 192
+rowLimit = 288
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))

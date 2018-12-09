@@ -1,8 +1,51 @@
-import numpy as np
+import os
 
+import numpy as np
+import pandas as pd
+
+from pprint import pprint
 from time import time
 
 from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import train_test_split
+
+worldbuilding = "worldbuilding.stackexchange.com"
+serverfault = "serverfault.com"
+
+miniData = True
+limitFeatures = True
+dataset = worldbuilding
+
+buPath = os.path.dirname(os.path.realpath(__file__))
+dataPath = os.path.join(buPath, "..", "..", "..", "data")
+
+def pullData():
+    # I ACTUALLY NEED TO ADD THIS TO THE AUTOENCODER SO I CAN DO DIMENSION REDUCTION FIRST
+    # THEN THE RESULT OF THE DIMENSION REDUCTION WILL BE USED HERE IN THE SVM
+
+    #Pull data from csv and yeet it into a df
+    #Remove the userID column from the df
+    #Use the userID column as the label column
+    
+    inputData = None
+    userIDs = None
+
+    if miniData:    
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
+    else:
+        #Pull the full dataset with its extracted features
+        pass
+    if limitFeatures:
+        inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
+
+    userIDs = inputData.pop("userID").values
+    inputData = inputData.values
+
+    #Fix this
+    trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
+                                                test_size=0.2, train_size=0.8)
+
+    return trainData, trainIDs, testData, testIDs
 
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, cv=cv)
@@ -44,3 +87,11 @@ def report(results, bestN=3):
             print(f"Mean validation score: {results['mean_test_score'][candidate]:.3f} "
                 + f"(std: {results['std_test_score'][candidate]:.3f})")
             print(f"Parameters: {results['params'][candidate]}\n")
+
+def uniqueUsers():
+    inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
+    users = inputData["userID"].values
+
+    np.set_printoptions(suppress=True)
+    print(f"\n\n\n{((np.unique(users, return_counts=True)[1]))}\n\n\n")
+    print(f"{len(np.unique(users))} unique users")

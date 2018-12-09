@@ -1,51 +1,12 @@
-import os
-
 import numpy as np
-import pandas as pd
 
 from pprint import pprint
 
+from .sklearnHelper import pullData, uniqueUsers
 from .sklearnHelper import hyperSearch, report
+from .equiv import jumpy
 
-from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
-
-worldbuilding = "worldbuilding.stackexchange.com"
-serverfault = "serverfault.com"
-
-miniData = True
-limitFeatures = True
-dataset = worldbuilding
-
-buPath = os.path.dirname(os.path.realpath(__file__))
-dataPath = os.path.join(buPath, "..", "..", "..", "data")
-
-def pullData():
-    # I ACTUALLY NEED TO ADD THIS TO THE AUTOENCODER SO I CAN DO DIMENSION REDUCTION FIRST
-    # THEN THE RESULT OF THE DIMENSION REDUCTION WILL BE USED HERE IN THE SVM
-
-    #Pull data from csv and yeet it into a df
-    #Remove the userID column from the df
-    #Use the userID column as the label column
-    
-    inputData = None
-    userIDs = None
-
-    if miniData:    
-        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
-    else:
-        pass
-    if limitFeatures:
-        inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
-
-    userIDs = inputData.pop("userID").values
-    inputData = inputData.values
-
-    #Fix this
-    trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
-                                                test_size=0.2, train_size=0.8)
-
-    return trainData, trainIDs, testData, testIDs
 
 """
 This should retrieve the top x models found from the searching cross-validation
@@ -58,6 +19,8 @@ def pullTopX(num=5):
 def initSVM():
     trainX, trainY, testX, testY = pullData()
 
+    print(f"{len(np.unique(trainY))} different training classes\n\n")
+
     paramDist = {
         "kernel": ["linear", "poly", "rbf", "sigmoid"],
         "degree": list(range(6)),
@@ -69,7 +32,7 @@ def initSVM():
 
     #I calculated it, doing a complete search with all of these parameters will take 
     #5 and a half days...
-    classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=5)
+    classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=5)
     # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
     # print(type(classy.cv_results_))
@@ -85,8 +48,24 @@ Runs experiments on each of the different methods to determine equivalence class
 """
 def testEquiv():
     classy, testX, testY = initSVM()
+    predictions = classy.predict_proba(testX)
 
-    classy.predict(testX)
+    uniqueUsers()
+    print(f"{predictions.shape[1]} different classes")
+    print("\n\n\n\n\n\n\n")
+
+
+    print("Predictions")
+    pprint(classy.predict(testX))
+    pprint(classy.predict(testX)[0])
+    print("Max value")
+    pprint(predictions[0])
+    pprint(np.argmax(predictions[0]))
+    print("Actual")
+    pprint(testY[0])
+
+    #Look at the predicted class then compare that to the maximum index in the probability array
+    jumpy(predictions, testY)
 
 if __name__ == "__main__":
     testEquiv()
