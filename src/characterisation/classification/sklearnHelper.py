@@ -3,6 +3,7 @@ import os
 import numpy as np
 import pandas as pd
 
+from collections import defaultdict
 from pprint import pprint
 from time import time
 
@@ -93,5 +94,17 @@ def uniqueUsers():
     users = inputData["userID"].values
 
     np.set_printoptions(suppress=True)
-    print(f"\n\n\n{((np.unique(users, return_counts=True)[1]))}\n\n\n")
+    unique = np.unique(users, return_counts=True)
+    retUnique = defaultdict(lambda: 0)
+
+    # print(f"\n\n\n{(type(unique[1]))}\n\n\n")
+
+    #This could probably be resolved into a dict comprehension
+    for i in np.arange(unique[0].size):
+        retUnique[unique[0][i]] = unique[1][i]
+    
+    print(f"retUnique items type {type(retUnique.items())}")
+    print(retUnique.items())
     print(f"{len(np.unique(users))} unique users")
+
+    return unique[0]

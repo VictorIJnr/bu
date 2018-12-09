@@ -48,24 +48,25 @@ Runs experiments on each of the different methods to determine equivalence class
 """
 def testEquiv():
     classy, testX, testY = initSVM()
-    predictions = classy.predict_proba(testX)
+    predictProbs = classy.predict_proba(testX)
+    predictions = classy.predict(testX)
 
-    uniqueUsers()
-    print(f"{predictions.shape[1]} different classes")
-    print("\n\n\n\n\n\n\n")
+    mapping = uniqueUsers().astype(np.uint32)
+    print(f"User mapping {mapping}")
+    print(f"Mapping length {len(mapping)}")
+    print(f"{predictProbs.shape[1]} different classes")
+    print("\n\n\n\n")
 
-
-    print("Predictions")
-    pprint(classy.predict(testX))
-    pprint(classy.predict(testX)[0])
-    print("Max value")
-    pprint(predictions[0])
-    pprint(np.argmax(predictions[0]))
-    print("Actual")
-    pprint(testY[0])
+    
+    print(f"Predictions {predictions}")
+    print(f"First prediction: {predictions[0]}")
+    print(f"Max value: {predictProbs[0]}")
+    print(f"Prediction index: {np.argwhere(mapping==predictions[0])[0][0]}")
+    print(f"Max index: {np.argmax(predictProbs[0])}")
+    print(f"Actual class: {testY[0]}")
 
     #Look at the predicted class then compare that to the maximum index in the probability array
-    jumpy(predictions, testY)
+    jumpy(predictProbs, testY)
 
 if __name__ == "__main__":
     testEquiv()
