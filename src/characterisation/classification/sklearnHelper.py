@@ -27,7 +27,8 @@ def pullData():
     #Pull data from csv and yeet it into a df
     #Remove the userID column from the df
     #Use the userID column as the label column
-    
+    np.set_printoptions(suppress=True)
+
     inputData = None
     userIDs = None
 
@@ -39,16 +40,20 @@ def pullData():
     if limitFeatures:
         inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
 
-    userIDs = inputData.pop("userID").values
+    inputData = filterUsers(inputData)
+    
+    userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
 
     #Fix this
+    #I can't remember what I meant by "Fix this" but I think it's fixed now.
     trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
-                                                test_size=0.2, train_size=0.8)
+                                                test_size=0.2, train_size=0.8,
+                                                stratify=userIDs)
 
     return trainData, trainIDs, testData, testIDs
 
-def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
+def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=2):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, cv=cv)
     
     start = time()
@@ -89,15 +94,40 @@ def report(results, bestN=3):
                 + f"(std: {results['std_test_score'][candidate]:.3f})")
             print(f"Parameters: {results['params'][candidate]}\n")
 
+def filterUsers(dataframe):
+    users = dataframe["userID"].values.astype(np.uint32)
+    unique = np.unique(users, return_counts=True)
+    newDF = None
+
+    #It took me way too long to make this line of code. UGH.
+    #Just a dictionary of keys to their frequency in the dataset, where each key is a userID
+    threshMap = {int(userID): count for userID, count in zip(unique[0], unique[1])}
+
+    #Filtering the userID-frequency mapping to only get users with enough posts
+    mapCopy = threshMap.copy()
+    for userID, count in mapCopy.items():
+        if count < 5:
+            del threshMap[userID]
+
+    print("Threshold Users")
+    pprint(threshMap)
+
+    #Creating a list of all the 
+    users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
+
+    #Filtering the old data such that only users with a sufficient amount of records are present
+    newDF = dataframe[dataframe["userID"].isin(users)]
+    print("New dataframe")
+    pprint(newDF)
+
+    return newDF
+
 def uniqueUsers():
     inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
     users = inputData["userID"].values
 
-    np.set_printoptions(suppress=True)
     unique = np.unique(users, return_counts=True)
     retUnique = defaultdict(lambda: 0)
-
-    # print(f"\n\n\n{(type(unique[1]))}\n\n\n")
 
     #This could probably be resolved into a dict comprehension
     for i in np.arange(unique[0].size):
@@ -107,4 +137,4 @@ def uniqueUsers():
     print(retUnique.items())
     print(f"{len(np.unique(users))} unique users")
 
-    return unique[0]
+    return unique[0].astype(np.uint32)

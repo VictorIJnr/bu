@@ -1,10 +1,16 @@
 import numpy as np
 
+from .sklearnHelper import uniqueUsers as mappedIndices
+
 def jumpy(classPreds, targetIndeces):
     firstClass = targetIndeces[0]
     firstProbs = classPreds[0]
 
+    predictIndex = np.argwhere(mappedIndices==firstProbs)[0][0]
+    actualIndex = np.argwhere(mappedIndices==firstClass)[0][0]
+
     #Loop through all of the predictions and their corresponding actual values
+    #Then determine their accuracies.
     for i in range(classPreds.shape[0]):
         pass
 
@@ -16,7 +22,7 @@ def jumpy(classPreds, targetIndeces):
     #The range
     #I could fix this by somehow creating a tuple between classes and their probabilities
     #But scikit will need to have a method which could help me
-    firstClassProb = firstProbs[int(firstClass)]
+    firstClassProb = firstProbs[actualIndex]
 
     firstProbs = np.sort(firstProbs)[::-1]
 

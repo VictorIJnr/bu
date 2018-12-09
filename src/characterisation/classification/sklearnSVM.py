@@ -32,7 +32,7 @@ def initSVM():
 
     #I calculated it, doing a complete search with all of these parameters will take 
     #5 and a half days...
-    classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=5)
+    classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=2)
     # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
     # print(type(classy.cv_results_))
@@ -51,10 +51,11 @@ def testEquiv():
     predictProbs = classy.predict_proba(testX)
     predictions = classy.predict(testX)
 
-    mapping = uniqueUsers().astype(np.uint32)
+    mapping = uniqueUsers()
     print(f"User mapping {mapping}")
     print(f"Mapping length {len(mapping)}")
     print(f"{predictProbs.shape[1]} different classes")
+    print(f"{len(np.unique(testY))} different actual classes")
     print("\n\n\n\n")
 
     
