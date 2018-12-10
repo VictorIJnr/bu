@@ -2,7 +2,7 @@ import numpy as np
 
 from pprint import pprint
 
-from .sklearnHelper import pullData, uniqueUsers
+from .sklearnHelper import pullData, filteredMap
 from .sklearnHelper import hyperSearch, report
 from .equiv import jumpy
 
@@ -51,7 +51,7 @@ def testEquiv():
     predictProbs = classy.predict_proba(testX)
     predictions = classy.predict(testX)
 
-    mapping = uniqueUsers()
+    mapping = filteredMap()
     print(f"User mapping {mapping}")
     print(f"Mapping length {len(mapping)}")
     print(f"{predictProbs.shape[1]} different classes")
@@ -62,7 +62,7 @@ def testEquiv():
     print(f"Predictions {predictions}")
     print(f"First prediction: {predictions[0]}")
     print(f"Max value: {predictProbs[0]}")
-    print(f"Prediction index: {np.argwhere(mapping==predictions[0])[0][0]}")
+    print(f"Prediction index: {np.argwhere(mapping==predictions[0])}")
     print(f"Max index: {np.argmax(predictProbs[0])}")
     print(f"Actual class: {testY[0]}")
 

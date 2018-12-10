@@ -1,28 +1,44 @@
 import numpy as np
 
-from .sklearnHelper import uniqueUsers as mappedIndices
+from pprint import pprint
+
+from .sklearnHelper import filteredMap
 
 def jumpy(classPreds, targetIndeces):
-    firstClass = targetIndeces[0]
-    firstProbs = classPreds[0]
-
-    predictIndex = np.argwhere(mappedIndices==firstProbs)[0][0]
-    actualIndex = np.argwhere(mappedIndices==firstClass)[0][0]
+    filteredIDs = list(filteredMap().keys())
 
     #Loop through all of the predictions and their corresponding actual values
     #Then determine their accuracies.
-    for i in range(classPreds.shape[0]):
-        pass
+    for i in np.arange(classPreds.shape[0]):
+        #The target class and the array of predicted probabilities
+        actualClass = targetIndeces[i]
+        predictedProbs = classPreds[i]
 
-    #The probability calculated for the actual chosen class
-    print("\n\n\n\n\n\n\n")
-    print(firstClass)
+        #Mapping each userID to their corresponding probabilities
+        userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
+        
+        #
 
-    #ALSO the value of first class doesn't refer to the index, it's value could be outside
-    #The range
-    #I could fix this by somehow creating a tuple between classes and their probabilities
-    #But scikit will need to have a method which could help me
-    firstClassProb = firstProbs[actualIndex]
+    #Those 0s at the end will change to i in a loop
+    firstClass = targetIndeces[0]
+    firstProbs = classPreds[0]
+    
+    userMap = {userID: prob for userID, prob in zip(list(filteredMap().keys()), firstProbs)}
+    userKeyList = list(userMap.keys())
+
+
+    print(f"User key list {filteredIDs}")
+    print(f"Key list type {type(filteredIDs)}")
+
+    print(f"First Prob type {type(firstProbs)}")
+    print(f"Unsorted Probabilities {firstProbs}")
+    print(f"First Class {firstClass}")
+
+    actualIndex = filteredIDs.index(firstClass)
+    predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(firstProbs)))
+
+    print(f"Predicted Index {predictIndex}")
+    print(f"Actual Index {actualIndex}")
 
     firstProbs = np.sort(firstProbs)[::-1]
 
@@ -39,8 +55,16 @@ def jumpy(classPreds, targetIndeces):
     print(np.argmax(diffs))
 
     print("First Max")
+    print(firstMax)
     print(type(firstMax))
-    firstProbs = firstProbs[:int(firstMax)]
 
-    #Check if the actual class is contained within these probabilities
-    #Which would need like a tuple or a dict key value mapping
+    #Divides all the probabilities into 2, one predicted equivalence class and the rest
+    equivClass = firstProbs[:int(firstMax)]
+    pprint(equivClass)
+
+    #Checks if the actual class was contained in the respective equivalence class
+    predicted = userMap[firstClass] in equivClass
+    print(predicted)
+
+def keyFromValue(myDict, searchValue):
+    return list(myDict.keys())[list(myDict.values()).index(searchValue)]

@@ -20,6 +20,17 @@ dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "..", "data")
 
+def loadData():
+    if miniData:    
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
+    else:
+        #Pull the full dataset with its extracted features
+        pass
+    if limitFeatures:
+        inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
+
+    return inputData
+
 def pullData():
     # I ACTUALLY NEED TO ADD THIS TO THE AUTOENCODER SO I CAN DO DIMENSION REDUCTION FIRST
     # THEN THE RESULT OF THE DIMENSION REDUCTION WILL BE USED HERE IN THE SVM
@@ -29,18 +40,7 @@ def pullData():
     #Use the userID column as the label column
     np.set_printoptions(suppress=True)
 
-    inputData = None
-    userIDs = None
-
-    if miniData:    
-        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
-    else:
-        #Pull the full dataset with its extracted features
-        pass
-    if limitFeatures:
-        inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
-
-    inputData = filterUsers(inputData)
+    inputData = filterUsers()
     
     userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
@@ -94,8 +94,34 @@ def report(results, bestN=3):
                 + f"(std: {results['std_test_score'][candidate]:.3f})")
             print(f"Parameters: {results['params'][candidate]}\n")
 
-def filterUsers(dataframe):
-    users = dataframe["userID"].values.astype(np.uint32)
+def filterUsers(df=None, threshold=5):
+    if df is None:
+        df = loadData()
+
+    threshMap = filteredMap(df)
+    print("Threshold Users")
+    pprint(threshMap)
+
+    users = df["userID"].values.astype(np.uint32)
+
+    #Altering the userID column to only keep users who have met the threshold 
+    users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
+
+    #Filtering the old data such that only users with a sufficient amount of records are present
+    newDF = df[df["userID"].isin(users)]
+    print("New dataframe")
+    pprint(newDF)
+
+    return newDF
+
+"""
+Creates and returns a dictionary of users passing a given threshold
+"""
+def filteredMap(df=None, threshold=5):
+    if df is None:
+        df = loadData()
+
+    users = df["userID"].values.astype(np.uint32)
     unique = np.unique(users, return_counts=True)
     newDF = None
 
@@ -106,21 +132,10 @@ def filterUsers(dataframe):
     #Filtering the userID-frequency mapping to only get users with enough posts
     mapCopy = threshMap.copy()
     for userID, count in mapCopy.items():
-        if count < 5:
+        if count < threshold:
             del threshMap[userID]
 
-    print("Threshold Users")
-    pprint(threshMap)
-
-    #Creating a list of all the 
-    users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
-
-    #Filtering the old data such that only users with a sufficient amount of records are present
-    newDF = dataframe[dataframe["userID"].isin(users)]
-    print("New dataframe")
-    pprint(newDF)
-
-    return newDF
+    return threshMap
 
 def uniqueUsers():
     inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
@@ -133,8 +148,10 @@ def uniqueUsers():
     for i in np.arange(unique[0].size):
         retUnique[unique[0][i]] = unique[1][i]
     
-    print(f"retUnique items type {type(retUnique.items())}")
-    print(retUnique.items())
-    print(f"{len(np.unique(users))} unique users")
-
     return unique[0].astype(np.uint32)
+
+"""
+Maps each of the different userIDs to their corresponding probabilities
+"""
+def mapToProbs():
+    pass
