@@ -1,4 +1,5 @@
 import os
+import pickle
 
 import numpy as np
 import pandas as pd
@@ -153,8 +154,14 @@ def uniqueUsers():
     
     return unique[0].astype(np.uint32)
 
-"""
-Maps each of the different userIDs to their corresponding probabilities
-"""
-def mapToProbs():
-    pass
+def saveModel(model, fileName):
+    filePath = os.path.join(buPath, "myPickles")
+    if not os.path.exists(filePath):
+        os.makedirs(filePath)
+
+    with open(os.path.join(filePath, fileName), "wb") as myPickles:
+        pickle.dump(model, myPickles)
+
+def loadModel(fileName):
+    with open(os.path.join(buPath, "myPickles", fileName), "rb") as myPickles:
+        return pickle.load(myPickles)
