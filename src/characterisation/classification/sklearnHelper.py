@@ -20,6 +20,9 @@ dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "..", "data")
 
+"""
+Loads the dataset to be used into a dataframe
+"""
 def loadData():
     if miniData:    
         inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
@@ -53,7 +56,7 @@ def pullData():
 
     return trainData, trainIDs, testData, testIDs
 
-def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=2):
+def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, cv=cv)
     
     start = time()
@@ -99,8 +102,8 @@ def filterUsers(df=None, threshold=5):
         df = loadData()
 
     threshMap = filteredMap(df)
-    print("Threshold Users")
-    pprint(threshMap)
+    # print("Threshold Users")
+    # pprint(threshMap)
 
     users = df["userID"].values.astype(np.uint32)
 
@@ -109,8 +112,8 @@ def filterUsers(df=None, threshold=5):
 
     #Filtering the old data such that only users with a sufficient amount of records are present
     newDF = df[df["userID"].isin(users)]
-    print("New dataframe")
-    pprint(newDF)
+    # print("New dataframe")
+    # pprint(newDF)
 
     return newDF
 

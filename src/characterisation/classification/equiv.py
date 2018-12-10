@@ -5,6 +5,7 @@ from pprint import pprint
 from .sklearnHelper import filteredMap
 
 def jumpy(classPreds, targetIndeces):
+    accuracy = 0
     filteredIDs = list(filteredMap().keys())
 
     #Loop through all of the predictions and their corresponding actual values
@@ -17,54 +18,30 @@ def jumpy(classPreds, targetIndeces):
         #Mapping each userID to their corresponding probabilities
         userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
         
-        #
+        #Don't know if I'll run into issues using these indices later...
+        actualIndex = filteredIDs.index(actualClass)
+        predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(predictedProbs)))
+        
+        predictedProbs = np.sort(predictedProbs)[::-1]
+        diffs = np.diff(predictedProbs)
+        
+        #This isn't future proof, even though it's unlikely, multiple differences may have the
+        #same value, so this could return either an array or a scalar
+        #Index of the biggest difference in probabilities
+        diffIndex = np.argmax(diffs)
+        
+        #Splits the probabilities into 2 groups, one for the predicted equivalence class
+        #Just dumping the rest in another one (which we don't care about)
+        equivClass = predictedProbs[:int(diffIndex)]
+        
+        #Whether the target class appears in the equivalence class
+        predicted = userMap[actualClass] in equivClass
 
-    #Those 0s at the end will change to i in a loop
-    firstClass = targetIndeces[0]
-    firstProbs = classPreds[0]
-    
-    userMap = {userID: prob for userID, prob in zip(list(filteredMap().keys()), firstProbs)}
-    userKeyList = list(userMap.keys())
+        if not predicted:
+            accuracy += 1
+    accuracy = (1 - (accuracy / classPreds.shape[0])) * 100
 
-
-    print(f"User key list {filteredIDs}")
-    print(f"Key list type {type(filteredIDs)}")
-
-    print(f"First Prob type {type(firstProbs)}")
-    print(f"Unsorted Probabilities {firstProbs}")
-    print(f"First Class {firstClass}")
-
-    actualIndex = filteredIDs.index(firstClass)
-    predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(firstProbs)))
-
-    print(f"Predicted Index {predictIndex}")
-    print(f"Actual Index {actualIndex}")
-
-    firstProbs = np.sort(firstProbs)[::-1]
-
-    diffs = np.diff(firstProbs)
-
-    #This isn't future proof, even though it's unlikely, multiple differences may have the
-    #same value, so this could return either an array or a scalar
-    firstMax = np.argmax(diffs)
-
-    print(firstProbs)
-    print(diffs)
-
-    print(diffs.shape)
-    print(np.argmax(diffs))
-
-    print("First Max")
-    print(firstMax)
-    print(type(firstMax))
-
-    #Divides all the probabilities into 2, one predicted equivalence class and the rest
-    equivClass = firstProbs[:int(firstMax)]
-    pprint(equivClass)
-
-    #Checks if the actual class was contained in the respective equivalence class
-    predicted = userMap[firstClass] in equivClass
-    print(predicted)
+    print(f"Accuracy: {accuracy:.2f}%")
 
 def keyFromValue(myDict, searchValue):
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]

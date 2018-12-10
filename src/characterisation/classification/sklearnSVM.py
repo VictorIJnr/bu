@@ -32,7 +32,7 @@ def initSVM():
 
     #I calculated it, doing a complete search with all of these parameters will take 
     #5 and a half days...
-    classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=2)
+    classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=5)
     # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
     # print(type(classy.cv_results_))
@@ -52,21 +52,10 @@ def testEquiv():
     predictions = classy.predict(testX)
 
     mapping = filteredMap()
-    print(f"User mapping {mapping}")
-    print(f"Mapping length {len(mapping)}")
-    print(f"{predictProbs.shape[1]} different classes")
-    print(f"{len(np.unique(testY))} different actual classes")
-    print("\n\n\n\n")
+    print(f"Predictions: {predictions}")
+    print(f"Prediction Probabilities: {predictProbs}")
+    print(f"Actual Values: {testY}")
 
-    
-    print(f"Predictions {predictions}")
-    print(f"First prediction: {predictions[0]}")
-    print(f"Max value: {predictProbs[0]}")
-    print(f"Prediction index: {np.argwhere(mapping==predictions[0])}")
-    print(f"Max index: {np.argmax(predictProbs[0])}")
-    print(f"Actual class: {testY[0]}")
-
-    #Look at the predicted class then compare that to the maximum index in the probability array
     jumpy(predictProbs, testY)
 
 if __name__ == "__main__":
