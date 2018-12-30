@@ -38,7 +38,7 @@ def initSVM():
     # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
     # print(type(classy.cv_results_))
-    # pprint(classy.cv_results_)
+    pprint(classy.cv_results_)
 
     skh.saveModel(classy, "classy.pkl")
 
