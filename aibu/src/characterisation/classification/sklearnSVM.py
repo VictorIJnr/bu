@@ -34,6 +34,7 @@ def initSVM():
 
     #I calculated it, doing a complete search with all of these parameters will take 
     #5 and a half days...
+    #Run that search in the background of a lab machine
     classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=5)
     # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 

@@ -4,10 +4,13 @@ WORKDIR /bu
 
 #Copying everything will be temporary until I have fully setup distbu to work with JSON files
 #Hopefully there's a GraphQL thing that allows JSON list pagination? Maybe. IDK...
-#Okay I REALLY should get distbu up and running asap. This takes FOREVER.
-#Uncomment based on what you need
-# COPY data/ aibu/ /bu/
-COPY data/worldbuilding.stackexchange.com aibu/ /bu/
+#I'm no longer copying all of my data over, I'm using volumes instead. 
+#Well until I get distbu fully-operational with all of it's GraphQL stuff at least.
+#I'll need to use this with the relevant mounts on my laptop
+COPY aibu/src/requirements.txt bu/src/
 
-RUN pip install -r src/requirements.txt
-CMD ["bash"]
+RUN pip install -r bu/src/requirements.txt
+
+#This is the "exec" form, it's preferred but I like the "shell form" (the one I use) more
+# ENTRYPOINT ["bash"]
+ENTRYPOINT bash
