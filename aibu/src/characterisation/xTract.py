@@ -15,7 +15,10 @@ serverfault = "serverfault.com"
 
 spacy = sp.load("en")
 
-miniXtract = True
+debug = False
+
+miniXtract = False
+singleXtract = True
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
@@ -134,8 +137,10 @@ def runExtraction(fileName):
             + f"({(index / fileDF.shape[0]) * 100:.3f}%)\r", end="\r")
         doc = spacy(str(row["Body"]))
         wordCounts = getWordCounts(doc)
-        rowDict = dict.fromkeys(dfCols)
+        # rowDict = dict.fromkeys(dfCols)
+        rowDict = defaultdict(lambda: None)
         
+        #Adding features to a dict for CSV storage
         rowDict["userID"] = row["OwnerUserId"]
         rowDict["postID"] = row["Id"]
         rowDict["metaFreq"] = metaFrequencies(wordCounts)
@@ -147,6 +152,9 @@ def runExtraction(fileName):
         rowDict["trisLego"] = legomena(wordCounts, 3)
         rowDict["avgSentenceWords"] = avgSentenceWords(doc)
         rowDict["avgSentenceChars"] = avgSentenceChars(doc)
+
+        for shit in otherShit:
+            rowDict[f"stop-{stopWord}"]
         rowDict["stopWordFreq"] = stopWordFreq(wordCounts)
 
         rowList.append(rowDict)
@@ -158,8 +166,12 @@ def runExtraction(fileName):
         
 
 if __name__ == "__main__":
-    # main()
-    if miniXtract:
-        runExtraction("miniPosts.csv")
+    if debug: 
+        main()
     else:
-        runExtraction("RestrictedPosts.csv")
+        if miniXtract:
+            runExtraction("miniPosts.csv")
+        elif singleXtract:
+            runExtraction("singlePost.csv")
+        else:
+            runExtraction("RestrictedPosts.csv")
