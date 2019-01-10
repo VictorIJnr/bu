@@ -143,19 +143,24 @@ def runExtraction(fileName):
         #Adding features to a dict for CSV storage
         rowDict["userID"] = row["OwnerUserId"]
         rowDict["postID"] = row["Id"]
-        rowDict["metaFreq"] = metaFrequencies(wordCounts)
         rowDict["numWords"] = totalNumWords(doc)
         rowDict["numChars"] = totalNumChars(doc)
         rowDict["yule"] = yuleify(wordCounts)
-        rowDict["hapaxLego"] = legomena(wordCounts)
-        rowDict["disLego"] = legomena(wordCounts, 2)
-        rowDict["trisLego"] = legomena(wordCounts, 3)
         rowDict["avgSentenceWords"] = avgSentenceWords(doc)
         rowDict["avgSentenceChars"] = avgSentenceChars(doc)
 
-        for shit in otherShit:
-            rowDict[f"stop-{stopWord}"]
-        rowDict["stopWordFreq"] = stopWordFreq(wordCounts)
+        #These are essentially meta-frequencies
+        #So counting the number of words that appear once, twice, 3, 4, and 5 times
+        rowDict["legoHapax"] = legomena(wordCounts)
+        rowDict["legoDis"] = legomena(wordCounts, 2)
+        rowDict["legoTris"] = legomena(wordCounts, 3)
+        rowDict["legoTetrakis"] = legomena(wordCounts, 4)
+        rowDict["legoPentakis"] = legomena(wordCounts, 5)
+
+        #Putting all of the stop words as individual features
+        stoppies = stopWordFreq(wordCounts)
+        for stopWord, freq in stoppies.items():
+            rowDict[f"stop-{stopWord}"] = freq
 
         rowList.append(rowDict)
 
