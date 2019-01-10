@@ -22,10 +22,10 @@ Follow these steps and everything will be absolutely dandy. Don't worry, you can
    + Yep, step 4 was pretty much a buffer between 3 and 5 :P
 6. Don't get mad at me. Weren't you taught to read all of the instructions before following them?
 7. Pull my pre-built docker image by running `docker image pull victorijnr/bu:latest`
-   + By the time you see this, it should be made public so you can also go [here](https://cloud.docker.com/repository/docker/victorijnr/bu/tags) to see all the different image tags. Just stick to the latest imo, older builds may not be compatible with the current state of this repo.
-8. Run the command `docker container run -it --name bu --mount src=distbu,dst=/bu/ --mount src=$(pwd)/aibu/src,type=bind,dst=/bu/src victorijnr/bu:neg-1.0` from this repo's root folder.
+   + By the time you see this, it should be made public so you can also go [here](https://cloud.docker.com/repository/docker/victorijnr/bu/tags) to see all the different image tags. Just stick to the latest one imo, older builds may not be compatible with the current state of this repo.
+8. Run the command `docker container run -it --name bu --mount src=distbu,dst=/bu/ --mount src=$(pwd)/src,type=bind,dst=/bu/src victorijnr/bu:neg-1.0` from this repo's root folder.
     + Just copy-paste that, I shouldn't really need to tell you that, it's a pretty long one
-    + Don't worry, I'm learning bash in the meantime so this'll just be something like "Run ./imabashscript"
+    + Don't worry, I'm learning bash in the meantime so this'll just be something like "Run `./imabashscript`"
 9. Oh wait I realised you don't have the distbu volume. That sucks. Okay, if distbu isn't up and running by the time you see this, I'll have extra instructions on setting up the distbu volume for the last step in a later section.
 10. Play around!
     + You'll have a bash shell in front of you; if you've never used docker before, you're now inside the container. It's like if a VM went on a diet and could share data with other VMs. Nothing scary.
