@@ -24,5 +24,5 @@ RUN apt-get install less
 ENTRYPOINT bash
 
 #Just yeet this into the command line to run the container
-#docker container run -it --name bu --mount src=distbu,dst=/bu/ --mount src=$(pwd)/aibu/src,type=bind,dst=/bu/src victorijnr/bu:neg-1.0
+#docker container run -it --name bu --mount src=distbu,dst=/bu/ --mount src=$(pwd)/src,type=bind,dst=/bu/src victorijnr/bu:neg-1.0
 #That's a long boi, I know, I'm learning bash to make a script to run this for me

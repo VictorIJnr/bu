@@ -18,7 +18,7 @@ spacy = sp.load("en")
 debug = False
 
 miniXtract = False
-singleXtract = True
+singleXtract = False
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
@@ -124,6 +124,10 @@ def main():
     print(f"Average Number of Characters in a Sentence:\t{avgSentenceChars(doc)}\n")
     [print(sentence) for sentence in doc.sents]
 
+"""
+Runs feature extraction for a given CSV file relating to posts on StackExchange
+Creates a new CSV file consisting of the extracted features
+"""
 def runExtraction(fileName):
     dfCols = ["userID", "postID", "metaFreq", "numWords", "numChars", "yule",
                 "hapaxLego", "disLego", "trisLego", "avgSentenceWords",
@@ -133,42 +137,49 @@ def runExtraction(fileName):
 
     rowList = []
     for index, row in fileDF.iterrows():
+        #Just some verbose output
         print(f"Extracting Index {index} out of {fileDF.shape[0]} "
             + f"({(index / fileDF.shape[0]) * 100:.3f}%)\r", end="\r")
+        
         doc = spacy(str(row["Body"]))
         wordCounts = getWordCounts(doc)
-        # rowDict = dict.fromkeys(dfCols)
         rowDict = defaultdict(lambda: None)
+
+        numWords = totalNumWords(doc)
         
         #Adding features to a dict for CSV storage
         rowDict["userID"] = row["OwnerUserId"]
         rowDict["postID"] = row["Id"]
-        rowDict["numWords"] = totalNumWords(doc)
+        rowDict["numWords"] = numWords
         rowDict["numChars"] = totalNumChars(doc)
         rowDict["yule"] = yuleify(wordCounts)
         rowDict["avgSentenceWords"] = avgSentenceWords(doc)
         rowDict["avgSentenceChars"] = avgSentenceChars(doc)
 
+        #Don't you love division by 0?
+        numWords = 1 if numWords == 0 else numWords
+
         #These are essentially meta-frequencies
         #So counting the number of words that appear once, twice, 3, 4, and 5 times
-        rowDict["legoHapax"] = legomena(wordCounts)
-        rowDict["legoDis"] = legomena(wordCounts, 2)
-        rowDict["legoTris"] = legomena(wordCounts, 3)
-        rowDict["legoTetrakis"] = legomena(wordCounts, 4)
-        rowDict["legoPentakis"] = legomena(wordCounts, 5)
+        rowDict["legoHapax"] = legomena(wordCounts) / numWords
+        rowDict["legoDis"] = legomena(wordCounts, 2) / numWords
+        rowDict["legoTris"] = legomena(wordCounts, 3) / numWords
+        rowDict["legoTetrakis"] = legomena(wordCounts, 4) / numWords
+        rowDict["legoPentakis"] = legomena(wordCounts, 5) / numWords
 
         #Putting all of the stop words as individual features
         stoppies = stopWordFreq(wordCounts)
         for stopWord, freq in stoppies.items():
-            rowDict[f"stop-{stopWord}"] = freq
+            rowDict[f"stop-{stopWord}"] = freq / numWords
 
         rowList.append(rowDict)
 
     xTracted = pd.DataFrame(rowList)
     pprint(xTracted)
+    print(f"{xTracted.shape[1]} different features")
     
     xTracted.to_csv(os.path.join(dataPath, dataset, fileName[:-4] + "Extracted.csv"))
-        
+
 
 if __name__ == "__main__":
     if debug: 
