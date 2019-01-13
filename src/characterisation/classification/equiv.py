@@ -5,7 +5,8 @@ from pprint import pprint
 from .sklearnHelper import filteredMap
 
 def jumpy(classPreds, targetIndeces):
-    accuracy = 0
+    claccuracy = 0
+    indAccuracy = 0
     filteredIDs = list(filteredMap().keys())
 
     #Loop through all of the predictions and their corresponding actual values
@@ -20,7 +21,11 @@ def jumpy(classPreds, targetIndeces):
         
         #Don't know if I'll run into issues using these indices later...
         actualIndex = filteredIDs.index(actualClass)
+        #Index of the predicted class
         predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(predictedProbs)))
+
+        print(f"Actual index {actualIndex}")
+        print(f"Predicted index {predictIndex}\n\n")
         
         predictedProbs = np.sort(predictedProbs)[::-1]
         diffs = np.diff(predictedProbs)
@@ -34,14 +39,21 @@ def jumpy(classPreds, targetIndeces):
         #Just dumping the rest in another one (which we don't care about)
         equivClass = predictedProbs[:int(diffIndex)]
         
-        #Whether the target class appears in the equivalence class
-        predicted = userMap[actualClass] in equivClass
+        #Whether the target class appears in the equivalence classd
+        classPredicted = userMap[actualClass] in equivClass
+        predicted = actualIndex == predictIndex
 
+        #Counting all the misses to later calculate the class accuracy
+        if not classPredicted:
+            claccuracy += 1
         if not predicted:
-            accuracy += 1
-    accuracy = (1 - (accuracy / classPreds.shape[0])) * 100
+            indAccuracy += 1
 
-    print(f"Accuracy: {accuracy:.2f}%")
+    claccuracy = (1 - (claccuracy / classPreds.shape[0])) * 100
+    indAccuracy = (1 - (indAccuracy / classPreds.shape[0])) * 100
+
+    print(f"Class Accuracy: {claccuracy:.2f}%")
+    print(f"Individual Accuracy: {indAccuracy:.2f}%")
 
 def keyFromValue(myDict, searchValue):
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]
