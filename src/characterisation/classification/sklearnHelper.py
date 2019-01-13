@@ -14,8 +14,7 @@ from sklearn.model_selection import train_test_split
 worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
 
-miniData = True
-limitFeatures = True
+miniData = False
 dataset = worldbuilding
 
 buPath = os.path.dirname(os.path.realpath(__file__))
@@ -26,12 +25,11 @@ Loads the dataset to be used into a dataframe
 """
 def loadData():
     if miniData:    
+        #Pull a portion of the dataset with extracted features
         inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
     else:
         #Pull the full dataset with its extracted features
-        pass
-    if limitFeatures:
-        inputData.drop(["metaFreq", "stopWordFreq"], axis=1, inplace=True)
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPostsExtracted.csv"))
 
     return inputData
 
@@ -60,6 +58,8 @@ def pullData():
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, cv=cv)
     
+    print("Training model...")
+
     start = time()
     model.fit(trainX, trainY)
 

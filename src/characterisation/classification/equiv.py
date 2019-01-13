@@ -39,7 +39,7 @@ def jumpy(classPreds, targetIndeces):
         #Just dumping the rest in another one (which we don't care about)
         equivClass = predictedProbs[:int(diffIndex)]
         
-        #Whether the target class appears in the equivalence classd
+        #Whether the target class appears in the equivalence class
         classPredicted = userMap[actualClass] in equivClass
         predicted = actualIndex == predictIndex
 
@@ -52,8 +52,62 @@ def jumpy(classPreds, targetIndeces):
     claccuracy = (1 - (claccuracy / classPreds.shape[0])) * 100
     indAccuracy = (1 - (indAccuracy / classPreds.shape[0])) * 100
 
+    print(f"Equivalence Class Array: {equivClass}")
+
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%")
+
+"""
+Threshold function for users who have a score within the 90th percentile
+Where score relates to the probability of the user being of the desired class.
+"""
+def scoreDistri():
+    pass
+
+"""
+Thresholded against users (not scores) within the 90th percentile
+i.e. the 90th percentile of users when sorted by their scores
+"""
+def userCentiles(classPreds, targetIndeces):
+    claccuracy = 0
+    indAccuracy = 0
+    filteredIDs = list(filteredMap().keys())
+
+    for i in np.arange(classPreds.shape[0]):
+        #The target class and the array of predicted probabilities
+        actualClass = targetIndeces[i]
+        predictedProbs = classPreds[i]
+
+        #Mapping each userID to their corresponding probabilities
+        userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
+        
+        #Don't know if I'll run into issues using these indices later...
+        actualIndex = filteredIDs.index(actualClass)
+        #Index of the predicted class
+        predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(predictedProbs)))
+
+        print(f"Actual index {actualIndex}")
+        print(f"Predicted index {predictIndex}\n\n")
+        
+        predictedProbs = np.sort(predictedProbs)[::-1]
+
+def loopyHelpy(iterNum):
+    #The target class and the array of predicted probabilities
+    actualClass = targetIndeces[iterNum]
+    predictedProbs = classPreds[iterNum]
+
+    #Mapping each userID to their corresponding probabilities
+    userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
+    
+    #Don't know if I'll run into issues using these indices later...
+    actualIndex = filteredIDs.index(actualClass)
+    #Index of the predicted class
+    predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(predictedProbs)))
+
+    print(f"Actual index {actualIndex}")
+    print(f"Predicted index {predictIndex}\n\n")
+    
+    predictedProbs = np.sort(predictedProbs)[::-1]
 
 def keyFromValue(myDict, searchValue):
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]

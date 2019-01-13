@@ -136,6 +136,7 @@ def runExtraction(fileName):
     stopWords = loadStopWords()
 
     rowList = []
+    print(f"Extracting from {fileName}")
     for index, row in fileDF.iterrows():
         #Just some verbose output
         print(f"Extracting Index {index} out of {fileDF.shape[0]} "
