@@ -9,6 +9,8 @@ def jumpy(classPreds, targetIndeces):
     indAccuracy = 0
     filteredIDs = list(filteredMap().keys())
 
+    print(f"All of the filtered IDs {filteredIDs}")
+
     #Loop through all of the predictions and their corresponding actual values
     #Then determine their accuracies.
     for i in np.arange(classPreds.shape[0]):
@@ -20,6 +22,7 @@ def jumpy(classPreds, targetIndeces):
         userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
         
         #Don't know if I'll run into issues using these indices later...
+        #Yep there's somehow problems with this but I don't know exactly what's wrong
         actualIndex = filteredIDs.index(actualClass)
         #Index of the predicted class
         predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(predictedProbs)))
@@ -82,6 +85,7 @@ def userCentiles(classPreds, targetIndeces):
         userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
         
         #Don't know if I'll run into issues using these indices later...
+        #Yep there's somehow problems with this but I don't know exactly what's wrong
         actualIndex = filteredIDs.index(actualClass)
         #Index of the predicted class
         predictIndex = filteredIDs.index(keyFromValue(userMap, np.amax(predictedProbs)))

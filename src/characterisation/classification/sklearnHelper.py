@@ -1,5 +1,4 @@
 import os
-import pickle
 
 import numpy as np
 import pandas as pd
@@ -14,7 +13,7 @@ from sklearn.model_selection import train_test_split
 worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
 
-miniData = False
+miniData = True
 dataset = worldbuilding
 
 buPath = os.path.dirname(os.path.realpath(__file__))
@@ -33,7 +32,7 @@ def loadData():
 
     return inputData
 
-def pullData():
+def pullData(folds=5):
     # I ACTUALLY NEED TO ADD THIS TO THE AUTOENCODER SO I CAN DO DIMENSION REDUCTION FIRST
     # THEN THE RESULT OF THE DIMENSION REDUCTION WILL BE USED HERE IN THE SVM
 
@@ -42,6 +41,7 @@ def pullData():
     #Use the userID column as the label column
     np.set_printoptions(suppress=True)
 
+    #Fix the filter function so it actually filters users as per a given threshold
     inputData = filterUsers()
     
     userIDs = inputData.pop("userID").values.astype(np.uint32)
@@ -50,13 +50,14 @@ def pullData():
     #Fix this
     #I can't remember what I meant by "Fix this" but I think it's fixed now.
     trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
-                                                test_size=0.2, train_size=0.8,
+                                                test_size=1/folds, train_size=1-(1/folds),
                                                 stratify=userIDs)
 
     return trainData, trainIDs, testData, testIDs
 
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
-    model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, cv=cv)
+    model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, 
+                                cv=cv, verbose=2)
     
     print("Training model...")
 
@@ -98,32 +99,62 @@ def report(results, bestN=3):
                 + f"(std: {results['std_test_score'][candidate]:.3f})")
             print(f"Parameters: {results['params'][candidate]}\n")
 
+"""
+Filters users who have more than 'threshold' occurences in the dataset
+Specifying threshold should be done in accordance to 'folds' in pullData
+'threshold' should always be equal to 'folds' 
+"""
 def filterUsers(df=None, threshold=5):
     if df is None:
         df = loadData()
+    
+    threshMap = filteredMap(df, threshold=threshold)
+    threshold += 1
 
-    threshMap = filteredMap(df)
     # print("Threshold Users")
     # pprint(threshMap)
 
-    users = df["userID"].values.astype(np.uint32)
+    unfUsers = df["userID"].values.astype(np.uint32)
+    users = np.unique(df["userID"].values.astype(np.uint32))
+
+    print(f"Unfiltered Users {np.unique(users)}")
 
     #Altering the userID column to only keep users who have met the threshold 
-    users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
+    fUsers = users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
+    
+    print(f"Filtered Users {np.unique(users, return_counts=True)}")
+    print(f"Removed users {np.setdiff1d(np.unique(unfUsers), np.unique(users))}")
+
+
+    uniques = np.unique(unfUsers, return_counts=True)
+    userCounts = {int(userID): count for userID, count in zip(uniques[0], uniques[1])}
+    print(f"Unique User counts {userCounts}")
+
+    remCounts = {userID: userCounts[userID] for userID in fUsers}
+
+    print(f"Remaining User counts {remCounts}")
 
     #Filtering the old data such that only users with a sufficient amount of records are present
     newDF = df[df["userID"].isin(users)]
     # print("New dataframe")
     # pprint(newDF)
 
+    filtered = np.unique(newDF["userID"].values.astype(np.uint32), return_counts=True)
+    filtered = {userID: count for userID, count in zip(filtered[0], filtered[1])}
+    print(f"New users in dataframe {filtered}")
+    print(f"Sorted {sorted(filtered.items(), key=lambda kv: kv[1])}")
+
     return newDF
 
 """
 Creates and returns a dictionary of users passing a given threshold
+The supplied threshold, which should always be equal to 'folds'
 """
 def filteredMap(df=None, threshold=5):
     if df is None:
         df = loadData()
+
+    threshold += 1
 
     users = df["userID"].values.astype(np.uint32)
     unique = np.unique(users, return_counts=True)
@@ -141,6 +172,10 @@ def filteredMap(df=None, threshold=5):
 
     return threshMap
 
+"""
+I don't remember what this does and I've got a filtering bug I need
+to sort out before I figure out what's going on here
+"""
 def uniqueUsers():
     inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
     users = inputData["userID"].values
@@ -153,15 +188,3 @@ def uniqueUsers():
         retUnique[unique[0][i]] = unique[1][i]
     
     return unique[0].astype(np.uint32)
-
-def saveModel(model, fileName):
-    filePath = os.path.join(buPath, "myPickles")
-    if not os.path.exists(filePath):
-        os.makedirs(filePath)
-
-    with open(os.path.join(filePath, fileName), "wb") as myPickles:
-        pickle.dump(model, myPickles)
-
-def loadModel(fileName):
-    with open(os.path.join(buPath, "myPickles", fileName), "rb") as myPickles:
-        return pickle.load(myPickles)

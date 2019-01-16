@@ -3,7 +3,7 @@ import numpy as np
 
 from pprint import pprint
 
-from . import sklearnHelper as skh
+from helpers import fileIO
 from .sklearnHelper import hyperSearch
 from .sklearnHelper import pullData, filteredMap
 from .equiv import jumpy
@@ -41,7 +41,7 @@ def initSVM():
     # print(type(classy.cv_results_))
     pprint(classy.cv_results_)
 
-    skh.saveModel(classy, "classy.pkl")
+    fileIO.savePickle(classy, "classy.pkl")
 
     #This is a bad way of retaining the test data... I'll find another way to fix this sometime
     #Huh, I just thought of one, pass the training parameters to this method instead

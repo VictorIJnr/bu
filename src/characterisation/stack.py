@@ -8,6 +8,7 @@ import pandas as pd
 from collections import defaultdict
 from pprint import pprint
 
+from helpers import fileIO
 from characterisation.XMLParse import ParseXML
 
 worldbuilding = "worldbuilding.stackexchange.com"
@@ -15,8 +16,9 @@ serverfault = "serverfault.com"
 
 spacy = sp.load("en")
 limitRows = True
-rowLimit = 64
+# rowLimit = 64
 # rowLimit = 288
+rowLimit = 512
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
@@ -50,30 +52,43 @@ def restrict(df, limit=5):
 def preRestriction(df, limit=5):
     userDict = defaultdict(lambda: 0)
 
-    for index, row in df.iterrows():
-        sys.stdout.write(f"Progress:\t{(index / postDF.shape[0]) * 100:.3f}%\r")
-        sys.stdout.flush()
+    try:
+        #Load a pre-filtered dataset if it exists
+        print("Attempting to use cached prefiltered dataset...")
+        userDict = fileIO.loadJSON("preRestrict.json")
+    except FileNotFoundError:
+        #If it didn't exist, build it
+        print("Pre-existing prefiltered dataset does not exist. Building from scratch...")
         
-        #If the post by the user is an answer
-        if (row["PostTypeId"] == 2):
-            cleanBody(df, index, row)
-            userDict[row["OwnerUserId"]] += 1
-        #If the post is a question extra conditions must be met 
-        elif (row["PostTypeId"] == 1):
-            count = 0
-            #Getting all of the comments for the current post
-            postID = row["Id"]
-            postComments = commentDF.query("PostId == @postID")
-
-            #Counting the number of comments made by the question creator
-            for commentIndex, comment in postComments.iterrows():
-                if (comment["UserId"] == row["OwnerUserId"]):
-                    count += 1
-            #Only if the question creator has a sufficient amount of comments under
-            #their question, are they considered to have enough data
-            if count > limit:
+        for index, row in df.iterrows():
+            sys.stdout.write(f"Progress:\t{(index / postDF.shape[0]) * 100:.3f}%\r")
+            sys.stdout.flush()
+            
+            #If the post by the user is an answer
+            if (row["PostTypeId"] == 2):
                 cleanBody(df, index, row)
                 userDict[row["OwnerUserId"]] += 1
+            #If the post is a question extra conditions must be met 
+            elif (row["PostTypeId"] == 1):
+                count = 0
+                #Getting all of the comments for the current post
+                postID = row["Id"]
+                postComments = commentDF.query("PostId == @postID")
+
+                #Counting the number of comments made by the question creator
+                for commentIndex, comment in postComments.iterrows():
+                    if (comment["UserId"] == row["OwnerUserId"]):
+                        count += 1
+                #Only if the question creator has a sufficient amount of comments under
+                #their question, are they considered to have enough data
+                if count > limit:
+                    cleanBody(df, index, row)
+                    userDict[row["OwnerUserId"]] += 1
+        #Saving the prefiltered dataset                    
+        fileIO.saveJSON(userDict, "preRestrict.json")
+    else:
+        print("Cached prefiltered dataset located...")
+    
     return userDict
 
 def miniPreRestriction(df):

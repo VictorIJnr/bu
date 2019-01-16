@@ -17,7 +17,7 @@ spacy = sp.load("en")
 
 debug = False
 
-miniXtract = False
+miniXtract = True  
 singleXtract = False
 
 dataset = worldbuilding
