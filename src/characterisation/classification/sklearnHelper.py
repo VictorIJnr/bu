@@ -116,25 +116,10 @@ def filterUsers(df=None, threshold=5):
     # print("Threshold Users")
     # pprint(threshMap)
 
-    unfUsers = df["userID"].values.astype(np.uint32)
     users = np.unique(df["userID"].values.astype(np.uint32))
 
-    print(f"Unfiltered Users {np.unique(users)}")
-
     #Altering the userID column to only keep users who have met the threshold 
-    fUsers = users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
-    
-    print(f"Filtered Users {np.unique(users, return_counts=True)}")
-    print(f"Removed users {np.setdiff1d(np.unique(unfUsers), np.unique(users))}")
-
-
-    uniques = np.unique(unfUsers, return_counts=True)
-    userCounts = {int(userID): count for userID, count in zip(uniques[0], uniques[1])}
-    print(f"Unique User counts {userCounts}")
-
-    remCounts = {userID: userCounts[userID] for userID in fUsers}
-
-    print(f"Remaining User counts {remCounts}")
+    users = np.delete(users, np.where(np.in1d(users, list(threshMap.keys()), assume_unique=True, invert=True)))
 
     #Filtering the old data such that only users with a sufficient amount of records are present
     newDF = df[df["userID"].isin(users)]
@@ -143,8 +128,6 @@ def filterUsers(df=None, threshold=5):
 
     filtered = np.unique(newDF["userID"].values.astype(np.uint32), return_counts=True)
     filtered = {userID: count for userID, count in zip(filtered[0], filtered[1])}
-    print(f"New users in dataframe {filtered}")
-    print(f"Sorted {sorted(filtered.items(), key=lambda kv: kv[1])}")
 
     return newDF
 

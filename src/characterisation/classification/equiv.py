@@ -67,8 +67,41 @@ def jumpy(classPreds, targetIndeces):
 Threshold function for users who have a score within the 95th percentile
 Where score relates to the probability of the user being of the desired class.
 """
-def scoreDistri(classPreds, targetIndeces, percentile=95):
-    pass
+def scoreDistri(classPreds, targetIndeces, percentile=90):
+    claccuracy = 0
+    indAccuracy = 0
+
+    for i in np.arange(classPreds.shape[0]):
+        actualClass = targetIndeces[i]
+        predictedProbs = classPreds[i]
+
+        userMap = makeUserMap(predictedProbs)
+
+        sortedProbs = np.sort(predictedProbs)[::-1]
+        thresholdProb = sortedProbs[0] * (percentile / 100)
+
+        sortedUsers = {userID: prob for userID, prob in userMap.items() if prob > thresholdProb}
+        sortedUsers = sorted(sortedUsers.items(), key=lambda kv: kv[1], reverse=True)
+
+        # Forming the array of equivalent classes
+        equivClass = [users[0] for users in sortedUsers]
+        predictedClass = equivClass[0]
+
+        # Whether the target class appears in the equivalence class
+        classPredicted = actualClass in equivClass
+        predicted = actualClass == predictedClass        
+
+        if classPredicted:
+            claccuracy += 1
+        if predicted:
+            indAccuracy += 1
+
+    claccuracy = (claccuracy / classPreds.shape[0]) * 100
+    indAccuracy = (indAccuracy / classPreds.shape[0]) * 100
+
+    print("Score Percentiles")
+    print(f"Class Accuracy: {claccuracy:.2f}%")
+    print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
 
 """
 Thresholded against users (not scores) within the 90th percentile
@@ -77,8 +110,8 @@ i.e. the 90th percentile of users when sorted by their scores
 def userCentiles(classPreds, targetIndeces, percentile=90, verbose=False):
     claccuracy = 0
     indAccuracy = 0
-    filteredIDs = list(filteredMap().keys())
 
+    filteredIDs = list(filteredMap().keys())
     numUsers = int(round(len(filteredIDs) * (1 / (100 - percentile))))
 
     for i in np.arange(classPreds.shape[0]):
@@ -87,7 +120,7 @@ def userCentiles(classPreds, targetIndeces, percentile=90, verbose=False):
         predictedProbs = classPreds[i]
 
         # Mapping each userID to their corresponding probabilities
-        userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
+        userMap = makeUserMap(predictedProbs)
         
         # Sorting the users in descending order of possibilities
         sortedUsers = sorted(userMap.items(), key=lambda kv: kv[1], reverse=True)
@@ -123,3 +156,10 @@ def userCentiles(classPreds, targetIndeces, percentile=90, verbose=False):
 
 def keyFromValue(myDict, searchValue):
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]
+
+"""
+Maps each userID to their corresponding probabilities
+"""
+def makeUserMap(predictedProbs):
+    filteredIDs = list(filteredMap().keys())
+    return {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}

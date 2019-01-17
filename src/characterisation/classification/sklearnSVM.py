@@ -6,7 +6,7 @@ from pprint import pprint
 from helpers import fileIO
 from .sklearnHelper import hyperSearch
 from .sklearnHelper import pullData, filteredMap
-from .equiv import jumpy, userCentiles
+from .equiv import jumpy, userCentiles, scoreDistri
 
 from sklearn.svm import SVC
 
@@ -65,6 +65,8 @@ def testEquiv():
 
     mapping = filteredMap()
 
+    scoreDistri(predictProbs, testY)
+    
     jumpy(predictProbs, testY)
     userCentiles(predictProbs, testY)
 
