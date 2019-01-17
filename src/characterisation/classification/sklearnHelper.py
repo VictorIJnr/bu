@@ -57,14 +57,16 @@ def pullData(folds=5):
 
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, 
-                                cv=cv, verbose=2)
+                                cv=cv, verbose=2 if verbose else 0)
     
     print("Training model...")
 
     start = time()
     model.fit(trainX, trainY)
 
-    print("") #Only keep this whilst I have all those stupid warnings
+    #Only keep this whilst I have all those stupid warnings
+    #Some of the warnings aren't stupid, like the one warning me about the number of folds
+    print("")
 
     if verbose:
         print(f"Parameter search took {time() - start:.2f} seconds to explore {searchNum}"
