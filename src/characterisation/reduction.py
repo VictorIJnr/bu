@@ -11,7 +11,7 @@ Create the AutoEncoder model which will perform feature set reduction
 
 factor dictates the amount of dimension reduction
 """                
-def initAE(xTrain, xTest, factor=4):
+def initAE(xTrain, xTest, factor=16):
     #Reduce from 12 dimensions to 3
     (x_train, _), (x_test, _) = mnist.load_data()
 
@@ -22,6 +22,8 @@ def initAE(xTrain, xTest, factor=4):
     x_test = np.reshape(x_test, (len(x_test), 28, 28, 1)) """
 
     numFeatures = xTrain.shape[0]
+
+    print(xTrain.shape / factor)
 
     inputText = Input(shape=(numFeatures,))
     x = Conv1D(3, 3, activation="relu", padding="same")(inputText)
@@ -47,7 +49,37 @@ def initAE(xTrain, xTest, factor=4):
 
 
 """
-Encodes input
+Creates the network responsible for encoding data
 """
-def autoEncode():
-    pass
+def initEncoder(numFeatures, factor=16):
+    reducedSize = numFeatures / factor
+
+    #Deep AutoEncoding, scaling down by factor over the course of 4 layers
+    inputLayer = Input(shape=(numFeatures,))
+    xEnc = Conv1D(8, 4, activation="relu", padding="same")(inputLayer)
+    xEnc = MaxPooling1D(factor / 2, padding="same")(xEnc)
+    xEnc = Conv1D(4, 4, activation="relu", padding="same")(xEnc)
+    xEnc = MaxPooling1D(factor / 2, padding="same")(xEnc)
+
+    #Mapping a user's features to their reduced representation
+    encoder = Model(inputLayer, xEnc)
+    return encoder
+
+"""
+Creates the network responsible for decoding data
+"""
+def initDecoder(numFeatures, factor=16):
+    reducedSize = numFeatures / factor
+
+    inputLayer = Input(shape=(reducedSize,))
+    xDec = Conv1D(4, 4, activation="relu", padding="same")(inputLayer)
+    xDec = UpSampling1D(factor / 2)(xDec)
+    xDec = Conv1D(8, 4, activation="relu")(xDec)
+    xDec = UpSampling1D(factor / 2)(xDec)
+    xDec = Conv1D(1, 4, activation="relu")(xDec)
+
+    decoder = Model(inputLayer, xDec)
+    return decoder
+
+if __name__ == "__main__":
+    initEncoder()
