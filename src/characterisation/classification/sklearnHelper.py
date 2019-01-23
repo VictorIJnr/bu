@@ -22,8 +22,8 @@ dataPath = os.path.join(buPath, "..", "..", "..", "data")
 """
 Loads the dataset to be used into a dataframe
 """
-def loadData():
-    if miniData:    
+def loadData(fullData=False):
+    if miniData and not fullData:   
         #Pull a portion of the dataset with extracted features
         inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
     else:
@@ -32,7 +32,7 @@ def loadData():
 
     return inputData
 
-def pullData(folds=5):
+def pullData(folds=5, fullData=False):
     # I ACTUALLY NEED TO ADD THIS TO THE AUTOENCODER SO I CAN DO DIMENSION REDUCTION FIRST
     # THEN THE RESULT OF THE DIMENSION REDUCTION WILL BE USED HERE IN THE SVM
 
@@ -42,7 +42,7 @@ def pullData(folds=5):
     np.set_printoptions(suppress=True)
 
     #Fix the filter function so it actually filters users as per a given threshold
-    inputData = filterUsers()
+    inputData = filterUsers(df=loadData(fullData))
     
     userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
