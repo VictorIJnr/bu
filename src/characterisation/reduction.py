@@ -12,8 +12,10 @@ from characterisation.classification import sklearnHelper as skh
 
 """
 Create the AutoEncoder model which will perform feature set reduction
-
 factor dictates the amount of dimension reduction
+
+A factor of 16 takes the input down from 305-dimensional to being 80-dimensional
+The output shape of the encoder is (?, 20, 4) 
 """                
 def initAE(xTrain, xTest, factor=16):
     numFeatures = xTrain.shape[1]
@@ -61,7 +63,6 @@ This factor must be a square number given the current implementation
 """
 def initEncoder(trainShape, factor=16):
     numFeatures = trainShape[1]
-
 
     #Deep AutoEncoding, scaling down by factor over the course of 4 layers
     #16 is just a hyper-parameter for the number of time steps in the ConvNet

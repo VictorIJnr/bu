@@ -55,7 +55,7 @@ def preRestriction(df, limit=5):
     try:
         #Load a pre-filtered dataset if it exists
         print("Attempting to use cached prefiltered dataset...")
-        userDict = fileIO.loadJSON("preRestrict.json")
+        userDict = fileIO.loadJSON(f"preRestrict{dataset}.json")
     except FileNotFoundError:
         #If it didn't exist, build it
         print("Pre-existing prefiltered dataset does not exist. Building from scratch...")
@@ -85,7 +85,7 @@ def preRestriction(df, limit=5):
                     cleanBody(df, index, row)
                     userDict[row["OwnerUserId"]] += 1
         #Saving the prefiltered dataset                    
-        fileIO.saveJSON(userDict, "preRestrict.json")
+        fileIO.saveJSON(userDict, f"preRestrict{dataset}.json")
     else:
         print("Cached prefiltered dataset located...")
     
@@ -121,6 +121,29 @@ def main():
     postDF = postDF[:rowLimit] if limitRows else postDF
     savePath = "miniPosts.csv" if limitRows else "RestrictedPosts.csv"
     postDF.to_csv(os.path.join(dataPath, dataset, savePath))
+
+"""
+Filters a dataset to only include users which have reached a provided threshold
+"""
+def execRestrict(dataset, limit=rowLimit):
+    allPosts = None
+    allComments = None
+    
+    print("Loading data into dataframe...")
+
+    if dataset == "worldbuilding":
+        allPosts = pd.read_csv(os.path.join(dataPath, worldbuilding, "Posts.csv"))
+        allComments = pd.read_csv(os.path.join(dataPath, worldbuilding, "Comments.csv"))
+    elif dataset == "serverfault":
+        allPosts = pd.read_csv(os.path.join(dataPath, serverfault, "Posts.csv"))
+        allComments = pd.read_csv(os.path.join(dataPath, serverfault, "Comments.csv"))
+
+    print(f"Initial number of Posts:\t{allPosts.shape[0]}")
+    newPosts, _, _ = restrict(allPosts)
+
+    newPosts = newPosts[:rowLimit] if limitRows else newPosts
+    savePath = "miniPosts.csv" if limitRows else "RestrictedPosts.csv"
+    newPosts.to_csv(os.path.join(dataPath, dataset, savePath))
 
 if __name__ == "__main__":
     main()
