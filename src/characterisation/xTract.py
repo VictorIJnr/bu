@@ -58,7 +58,9 @@ def totalNumChars(doc):
     words = reduce(lambda x, y: x + y, words)
     return sum([len(word) for word in words])
 
-#Yule's I
+"""
+Yule's I
+"""
 def yuleify(wordCounts):
     m1 = len(wordCounts)
     m2 = sum([key * value for (key, value) in metaFrequencies(wordCounts).items()])
@@ -127,12 +129,17 @@ def main():
 """
 Runs feature extraction for a given CSV file relating to posts on StackExchange
 Creates a new CSV file consisting of the extracted features
+This is only for testing, execXtract is for general use
 """
 def runExtraction(fileName):
+    print(f"Debug xTract {os.path.join(dataset, fileName)}")
+    execXtract(os.path.join(dataset, fileName))
+
+def execXtract(fileName):
     dfCols = ["userID", "postID", "metaFreq", "numWords", "numChars", "yule",
                 "hapaxLego", "disLego", "trisLego", "avgSentenceWords",
                 "avgSentenceChars", "stopWordFreq"]
-    fileDF = pd.read_csv(os.path.join(dataPath, dataset, fileName))
+    fileDF = pd.read_csv(os.path.join(dataPath, fileName))
     stopWords = loadStopWords()
 
     rowList = []
@@ -179,7 +186,7 @@ def runExtraction(fileName):
     pprint(xTracted)
     print(f"{xTracted.shape[1]} different features")
     
-    xTracted.to_csv(os.path.join(dataPath, dataset, fileName[:-4] + "Extracted.csv"))
+    xTracted.to_csv(os.path.join(dataPath, fileName[:-4] + "Extracted.csv"))
 
 
 if __name__ == "__main__":
@@ -187,7 +194,7 @@ if __name__ == "__main__":
         main()
     else:
         if miniXtract:
-            runExtraction("miniPosts.csv")
+            runExtraction("miniRestrictedPosts.csv")
         elif singleXtract:
             runExtraction("singlePost.csv")
         else:

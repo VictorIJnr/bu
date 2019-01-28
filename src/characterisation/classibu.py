@@ -7,6 +7,9 @@ from characterisation.reduction import initAE
 
 """
 Performs dimension reduction on the dataset
+
+I've got an idea. Train the dimension reduction on a StackSite that we won't use.
+Something like 
 """
 def dimReduction():
     xTrain, yTrain, xTest, yTest = skh.pullData(fullData=True)

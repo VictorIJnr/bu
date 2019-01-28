@@ -24,18 +24,13 @@ dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "data")
 
-print("Loading data into dataframe...")
-postDF = pd.read_csv(os.path.join(dataPath, dataset, "Posts.csv"))
-commentDF = pd.read_csv(os.path.join(dataPath, dataset, "Comments.csv"))
-
 def cleanBody(df, index, row):
     oldBody = row["Body"]
     cleaner = re.compile("<.*?>|\r?\n|\r")
     df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
-def restrict(df, limit=5):
-    global postDF
-    userDict = preRestriction(df, limit)
+def restrict(df, commentDF, limit=5):
+    userDict = preRestriction(df, commentDF, limit)
     # userDict = miniPreRestriction(df)
 
     initNumUsers = len(userDict)
@@ -49,19 +44,19 @@ def restrict(df, limit=5):
 
     return newDF, userDict, initNumUsers
 
-def preRestriction(df, limit=5):
+def preRestriction(df, commentDF, limit=5):
     userDict = defaultdict(lambda: 0)
 
     try:
         #Load a pre-filtered dataset if it exists
         print("Attempting to use cached prefiltered dataset...")
-        userDict = fileIO.loadJSON(f"preRestrict{dataset}.json")
+        userDict = fileIO.loadJSON(f"preRestrict_{dataset.split('.')[0]}.json")
     except FileNotFoundError:
         #If it didn't exist, build it
         print("Pre-existing prefiltered dataset does not exist. Building from scratch...")
         
         for index, row in df.iterrows():
-            sys.stdout.write(f"Progress:\t{(index / postDF.shape[0]) * 100:.3f}%\r")
+            sys.stdout.write(f"Progress:\t{(index / df.shape[0]) * 100:.3f}%\r")
             sys.stdout.flush()
             
             #If the post by the user is an answer
@@ -85,7 +80,7 @@ def preRestriction(df, limit=5):
                     cleanBody(df, index, row)
                     userDict[row["OwnerUserId"]] += 1
         #Saving the prefiltered dataset                    
-        fileIO.saveJSON(userDict, f"preRestrict{dataset}.json")
+        fileIO.saveJSON(userDict, f"preRestrict_{dataset.split('.')[0]}.json")
     else:
         print("Cached prefiltered dataset located...")
     
@@ -106,7 +101,9 @@ def miniPreRestriction(df):
     return userDict
 
 def main():
-    global postDF
+    print("Loading data into dataframe...")
+    postDF = pd.read_csv(os.path.join(dataPath, dataset, "Posts.csv"))
+    commentDF = pd.read_csv(os.path.join(dataPath, dataset, "Comments.csv")) 
 
     initNumPosts = postDF.shape[0]
     print(f"Initial number of Posts:\t{initNumPosts}")
@@ -119,30 +116,32 @@ def main():
     print(f"{initNumPosts - postDF.shape[0]} removed posts.")
 
     postDF = postDF[:rowLimit] if limitRows else postDF
-    savePath = "miniPosts.csv" if limitRows else "RestrictedPosts.csv"
+    savePath = "miniRestrictedPosts.csv" if limitRows else "RestrictedPosts.csv"
     postDF.to_csv(os.path.join(dataPath, dataset, savePath))
 
 """
 Filters a dataset to only include users which have reached a provided threshold
 """
-def execRestrict(dataset, limit=rowLimit):
+def execRestrict(myDataset, limit=rowLimit):
     allPosts = None
     allComments = None
     
     print("Loading data into dataframe...")
 
-    if dataset == "worldbuilding":
+    if myDataset == "worldbuilding":
+        dataset = worldbuilding
         allPosts = pd.read_csv(os.path.join(dataPath, worldbuilding, "Posts.csv"))
         allComments = pd.read_csv(os.path.join(dataPath, worldbuilding, "Comments.csv"))
-    elif dataset == "serverfault":
+    elif myDataset == "serverfault":
+        dataset = serverfault
         allPosts = pd.read_csv(os.path.join(dataPath, serverfault, "Posts.csv"))
         allComments = pd.read_csv(os.path.join(dataPath, serverfault, "Comments.csv"))
 
     print(f"Initial number of Posts:\t{allPosts.shape[0]}")
-    newPosts, _, _ = restrict(allPosts)
+    newPosts, _, _ = restrict(allPosts, allComments)
 
-    newPosts = newPosts[:rowLimit] if limitRows else newPosts
-    savePath = "miniPosts.csv" if limitRows else "RestrictedPosts.csv"
+    newPosts = newPosts[:limit] if limit is not None else newPosts
+    savePath = "miniRestrictedPosts.csv" if limit is not None else "RestrictedPosts.csv"
     newPosts.to_csv(os.path.join(dataPath, dataset, savePath))
 
 if __name__ == "__main__":
