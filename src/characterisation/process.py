@@ -27,8 +27,6 @@ Returns the file name of a given dataset file as a string
 def pullDatasetFile(dataset, fileType, mini=False):
     myDataset = None
 
-    print(f"My mini boi {mini}")
-
     if dataset == "worldbuilding":
         myDataset = worldbuilding
     elif dataset == "serverfault":
@@ -54,10 +52,10 @@ if __name__ == "__main__":
     argParser = ArgumentParser()
 
     #This can be expanded for multiple different datasets
-    argParser.add_argument("-d", "--ds", dest="dataset", metavar="dataset", default="serverfault",
+    argParser.add_argument("-d", "--dataset", dest="dataset", metavar="dataset", default="worldbuilding",
                         help="The dataset to run feature extraction")
     #This can also be expanded for multiple filetypes
-    argParser.add_argument("-f", "--ft", dest="fileType", metavar="fileType", default="Posts",
+    argParser.add_argument("-f", "--filetype", dest="fileType", metavar="fileType", default="Posts",
                         help="The file to extract features")
 
     argParser.add_argument("-l", "--limit", dest="limit", metavar="limit", type=int,
@@ -65,8 +63,6 @@ if __name__ == "__main__":
 
 
     myArgs = argParser.parse_args()
-
-    print(f"typy {type(myArgs.limit)}")
 
     #Use command line arguments here 
     dataProcess(myArgs.dataset, myArgs.fileType, dataRows=myArgs.limit)

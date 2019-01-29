@@ -11,6 +11,19 @@ from math import ceil
 from characterisation.classification import sklearnHelper as skh
 
 """
+Create an AutoEncoder model to learn feature set reduction.
+This differs from the succeeding method as it specifies a dataset to use for
+training, instead of straight-up passing in the training data.
+
+It doesn't actually matter the number of folds we pass into split(),
+as long as it's resonable.
+"""
+def initAE(dataset="serverfault", factor=16, mini=True):
+    xTrain, _, xTest, _ = skh.split(dataset, mini=mini)
+
+    return initAE(xTrain, xTest, factor)
+
+"""
 Create the AutoEncoder model which will perform feature set reduction
 factor dictates the amount of dimension reduction
 

@@ -22,10 +22,10 @@ dataPath = os.path.join(buPath, "..", "..", "..", "data")
 """
 Loads the dataset to be used into a dataframe
 """
-def loadData(fullData=False):
+def __loadData(fullData=False):
     if miniData and not fullData:   
         #Pull a portion of the dataset with extracted features
-        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniRestrictedPostsExtracted.csv"))
     else:
         #Pull the full dataset with its extracted features
         inputData = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPostsExtracted.csv"))
@@ -41,14 +41,64 @@ def pullData(folds=5, fullData=False):
     #Use the userID column as the label column
     np.set_printoptions(suppress=True)
 
-    #Fix the filter function so it actually filters users as per a given threshold
-    inputData = filterUsers(df=loadData(fullData))
+    inputData = filterUsers(df=__loadData(fullData))
     
     userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
 
     #Fix this
     #I can't remember what I meant by "Fix this" but I think it's fixed now.
+    trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
+                                                test_size=1/folds, train_size=1-(1/folds),
+                                                stratify=userIDs)
+
+    return trainData, trainIDs, testData, testIDs
+
+"""
+Similar to its private equivalent, loads a dataset into a dataframe.
+
+The difference between this and the private version is the specification of a dataset.
+This is meant to be used in tamden with other files, like "process.py" when automating
+a certain part of bu. Like processing a new dataset or using a dataset to train the
+dimension reduction ConvNet.
+"""
+def loadData(myDataset="worldbuilding", mini=True):
+    #I REALLY NEED TO LEARN PYTHON ENUMS SOON
+    if myDataset == "worldbuilding":
+        dataset = worldbuilding
+    elif myDataset == "serverfault":
+        dataset = serverfault
+
+    if mini:   
+        #Pull a portion of the dataset with extracted features
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniRestrictedPostsExtracted.csv"))
+    else:
+        #Pull the full dataset with its extracted features
+        inputData = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPostsExtracted.csv"))
+
+    return inputData
+
+"""
+As loadData() is to __loadData(), split() is the same for pullData()
+Essentially, pullData() is the development version, while splitData() is for production. 
+I guess?
+
+Anyway, this is used for automating stuff and being adaptable to a provided dataset.
+Just like __loadData(), pullData() will be kept for backwards compatability.
+I should eventually come up with a better name than "split()" though, I can't use pullData()
+yet because a bunch of other development stuff will break.
+"""
+def split(myDataset="worldbuilding", mini=True, folds=5):
+    if myDataset == "worldbuilding":
+        dataset = worldbuilding
+    elif myDataset == "serverfault":
+        dataset = serverfault
+
+    inputData = filterUsers(df=loadData(myDataset, mini))
+    
+    userIDs = inputData.pop("userID").values.astype(np.uint32)
+    inputData = inputData.values
+
     trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
                                                 test_size=1/folds, train_size=1-(1/folds),
                                                 stratify=userIDs)
@@ -108,7 +158,7 @@ Specifying threshold should be done in accordance to 'folds' in pullData
 """
 def filterUsers(df=None, threshold=5):
     if df is None:
-        df = loadData()
+        df = __loadData()
     
     threshMap = filteredMap(df, threshold=threshold)
     threshold += 1
@@ -137,7 +187,7 @@ The supplied threshold, which should always be equal to 'folds'
 """
 def filteredMap(df=None, threshold=5):
     if df is None:
-        df = loadData()
+        df = __loadData()
 
     threshold += 1
 
@@ -162,7 +212,7 @@ I don't remember what this does and I've got a filtering bug I need
 to sort out before I figure out what's going on here
 """
 def uniqueUsers():
-    inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniPostsExtracted.csv"))
+    inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniRestrictedPostsExtracted.csv"))
     users = inputData["userID"].values
 
     unique = np.unique(users, return_counts=True)

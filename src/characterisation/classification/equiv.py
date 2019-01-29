@@ -8,11 +8,13 @@ from .sklearnHelper import filteredMap
 Jump point equivalence class method.
 Checks if a userID (class) is within a subset of classes 
 based on the biggest difference of probabilities between classes
+
+dataset - the dataset which predictions are tested on (currently as a string)
 """
-def jumpy(classPreds, targetIndeces):
+def jumpy(dataset, classPreds, targetIndeces):
     claccuracy = 0
     indAccuracy = 0
-    filteredIDs = list(filteredMap().keys())
+    filteredIDs = list(filteredMap(dataset).keys())
 
     # Loop through all of the predictions and their corresponding actual values
     # Then determine their accuracies.
@@ -22,7 +24,7 @@ def jumpy(classPreds, targetIndeces):
         predictedProbs = classPreds[i]
 
         # Mapping each userID to their corresponding probabilities
-        userMap = {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
+        userMap = makeUserMap(dataset, predictedProbs)
         predictedClass = keyFromValue(userMap, np.amax(predictedProbs))
         
         # Don't know if I'll run into issues using these indices later...
@@ -67,7 +69,7 @@ def jumpy(classPreds, targetIndeces):
 Threshold function for users who have a score within the 95th percentile
 Where score relates to the probability of the user being of the desired class.
 """
-def scoreDistri(classPreds, targetIndeces, percentile=90):
+def scoreDistri(dataset, classPreds, targetIndeces, percentile=90):
     claccuracy = 0
     indAccuracy = 0
 
@@ -75,7 +77,7 @@ def scoreDistri(classPreds, targetIndeces, percentile=90):
         actualClass = targetIndeces[i]
         predictedProbs = classPreds[i]
 
-        userMap = makeUserMap(predictedProbs)
+        userMap = makeUserMap(dataset, predictedProbs)
 
         sortedProbs = np.sort(predictedProbs)[::-1]
         thresholdProb = sortedProbs[0] * (percentile / 100)
@@ -107,11 +109,11 @@ def scoreDistri(classPreds, targetIndeces, percentile=90):
 Thresholded against users (not scores) within the 90th percentile
 i.e. the 90th percentile of users when sorted by their scores
 """
-def userCentiles(classPreds, targetIndeces, percentile=90, verbose=False):
+def userCentiles(dataset, classPreds, targetIndeces, percentile=90, verbose=False):
     claccuracy = 0
     indAccuracy = 0
 
-    filteredIDs = list(filteredMap().keys())
+    filteredIDs = list(filteredMap(dataset).keys())
     numUsers = int(round(len(filteredIDs) * (1 / (100 - percentile))))
 
     for i in np.arange(classPreds.shape[0]):
@@ -120,7 +122,7 @@ def userCentiles(classPreds, targetIndeces, percentile=90, verbose=False):
         predictedProbs = classPreds[i]
 
         # Mapping each userID to their corresponding probabilities
-        userMap = makeUserMap(predictedProbs)
+        userMap = makeUserMap(dataset, predictedProbs)
         
         # Sorting the users in descending order of possibilities
         sortedUsers = sorted(userMap.items(), key=lambda kv: kv[1], reverse=True)
@@ -160,6 +162,6 @@ def keyFromValue(myDict, searchValue):
 """
 Maps each userID to their corresponding probabilities
 """
-def makeUserMap(predictedProbs):
-    filteredIDs = list(filteredMap().keys())
+def makeUserMap(dataset, predictedProbs):
+    filteredIDs = list(filteredMap(dataset).keys())
     return {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
