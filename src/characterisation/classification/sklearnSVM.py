@@ -1,12 +1,11 @@
 import numpy as np
 
-
 from pprint import pprint
 
 from helpers import fileIO
 from .sklearnHelper import hyperSearch
 from .sklearnHelper import pullData, filteredMap
-from .equiv import jumpy, userCentiles, scoreDistri
+from .equiv import jumpy, userCentiles, scoreDistri, Equivs
 
 from sklearn.svm import SVC
 
@@ -18,6 +17,9 @@ These models will the all be tested against the different equivalence class meth
 def pullTopX(num=5):
     pass
 
+"""
+Trains a SVM for user classification
+"""
 def initSVM(trainX, trainY, loadModel=False):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
@@ -46,6 +48,20 @@ def initSVM(trainX, trainY, loadModel=False):
         fileIO.savePickle(classy, "classy.pkl")
 
     return classy
+
+"""
+Predicts the equivalence class of users, with the provided algorithm given a model
+
+It's easier to use this method by passing a model instead of expecting to pass
+very specific data.
+""""
+def predict(model, equivClass=Equivs.JUMP):
+    if equivClass == Equivs.JUMP:
+        pass
+    elif equivClass == Equivs.SCORE_DIST:
+        pass
+    elif equivClass == Equivs.PERCENTILES:
+        pass
 
 """
 Loads a previously trained SVM model

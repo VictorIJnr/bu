@@ -2,8 +2,8 @@ import os
 
 from argparse import ArgumentParser
 
-from characterisation.stack import execRestrict
-from characterisation.xTract import execXtract
+from characterisation.helpers.stack import execRestrict
+from characterisation.helpers.xTract import execXtract
 
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "data")
@@ -17,8 +17,6 @@ Pull a dataset to extract features
 def dataProcess(dataset, fileType, dataRows=None):
     execRestrict(dataset, limit=dataRows)
 
-    print(f"Nony data rows {dataRows}")
-    
     execXtract(pullDatasetFile(dataset, fileType, mini=(dataRows is not None)))
 
 """

@@ -1,8 +1,11 @@
 import numpy as np
 
+from enum import Enum
 from pprint import pprint
 
 from .sklearnHelper import filteredMap
+
+Equivs = Enum("Equivs", "JUMP SCORE_DIST PERCENTILES")
 
 """
 Jump point equivalence class method.

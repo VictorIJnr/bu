@@ -9,7 +9,6 @@ from collections import defaultdict
 from pprint import pprint
 
 from helpers import fileIO
-from characterisation.XMLParse import ParseXML
 
 worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
