@@ -1,10 +1,10 @@
+import numpy as np
+
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, UpSampling1D
 from keras.models import Model
 
 from keras.datasets import mnist
 from keras.callbacks import TensorBoard
-
-import numpy as np
 
 from math import ceil
 
@@ -17,8 +17,10 @@ training, instead of straight-up passing in the training data.
 
 It doesn't actually matter the number of folds we pass into split(),
 as long as it's resonable.
+
+This has a name other than initAE because python doesn't like overloading
 """
-def initAE(dataset="serverfault", factor=16, mini=True):
+def initDatasetAE(dataset="serverfault", factor=16, mini=True):
     xTrain, _, xTest, _ = skh.split(dataset, mini=mini)
 
     return initAE(xTrain, xTest, factor)
@@ -67,7 +69,6 @@ def initAE(xTrain, xTest, factor=16):
 
     convAuto.save("autoencoder1D.h5")
     return convAuto
-
 
 """
 Creates the network responsible for encoding data

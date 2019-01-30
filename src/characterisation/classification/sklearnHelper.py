@@ -10,6 +10,8 @@ from time import time
 from sklearn.model_selection import RandomizedSearchCV
 from sklearn.model_selection import train_test_split
 
+from characterisation.helpers.process import dataProcess
+
 worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
 
@@ -71,10 +73,19 @@ def loadData(myDataset="worldbuilding", mini=True):
 
     if mini:   
         #Pull a portion of the dataset with extracted features
-        inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniRestrictedPostsExtracted.csv"))
+        try:
+            inputData = pd.read_csv(os.path.join(dataPath, dataset, "miniRestrictedPostsExtracted.csv"))
+        except FileNotFoundError:
+            #Iff the file doesn't exist, create it and load the data again
+            dataProcess(myDataset, "Posts", 1024)
+            return loadData(myDataset, mini)
     else:
         #Pull the full dataset with its extracted features
-        inputData = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPostsExtracted.csv"))
+        try:
+            inputData = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPostsExtracted.csv"))
+        except FileNotFoundError:
+            dataProcess(myDataset, "Posts")
+            return loadData(myDataset, mini)
 
     return inputData
 

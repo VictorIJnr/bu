@@ -45,7 +45,7 @@ def initSVM(trainX, trainY, loadModel=False):
         # print(type(classy.cv_results_))
         # pprint(classy.cv_results_)
 
-        fileIO.savePickle(classy, "classy.pkl")
+        fileIO.savePickle(classy, "classySVM.pkl")
 
     return classy
 
@@ -54,8 +54,8 @@ Predicts the equivalence class of users, with the provided algorithm given a mod
 
 It's easier to use this method by passing a model instead of expecting to pass
 very specific data.
-""""
-def predict(model, equivClass=Equivs.JUMP):
+"""
+def predict(model, xInput, equivClass=Equivs.JUMP):
     if equivClass == Equivs.JUMP:
         pass
     elif equivClass == Equivs.SCORE_DIST:
@@ -67,7 +67,7 @@ def predict(model, equivClass=Equivs.JUMP):
 Loads a previously trained SVM model
 """
 def loadSVM():
-    return fileIO.loadPickle("classy.pkl")
+    return fileIO.loadPickle("classySVM.pkl")
 
 """
 Runs experiments on each of the different methods to determine equivalence classes

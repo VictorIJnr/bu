@@ -22,7 +22,7 @@ singleXtract = False
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
-dataPath = os.path.join(buPath, "..", "..", "data")
+dataPath = os.path.join(buPath, "..", "..", "..", "data")
 
 #Features
 """

@@ -1,11 +1,14 @@
 #bu user classification main file
 
+import numpy as np
+
 from argparse import ArgumentParser
 
 from characterisation.classification import sklearnHelper as skh
 from characterisation.classification import sklearnSVM as svm
 
-from characterisation.helpers.reduction import initAE
+from characterisation.classification.equiv import Equivs
+from characterisation.helpers.reduction import initAE, initDatasetAE
 
 """
 Performs dimension reduction on the dataset
@@ -17,12 +20,21 @@ For the time being we'll use serverfault for an MVP, since it's already download
 def dimReduction(dataset="worldbuilding", mini=False, folds=5):
     xTrain, yTrain, xTest, yTest = skh.split(dataset, mini, folds)
 
-    convAE = initAE("serverfault", mini=mini)
+    #"serverfault" could be an argument, but it's fine being constant
+    convAE = initDatasetAE(dataset="serverfault", mini=mini)
+
+    xTrain = np.reshape(xTrain, (xTrain.shape[0], xTrain.shape[1], 1))
+    xTest = np.reshape(xTest, (xTest.shape[0], xTest.shape[1], 1))
 
     #Reducing the dimensions of the SVM training and testing data
     xTrain = convAE.predict(xTrain)
     xTest = convAE.predict(xTest)
 
+    #This reshaping is to ensure that the SVM can be trained
+    #The third dimension is the number of filters, so I should be fine dropping this.
+    xTrain = np.reshape(xTrain, (xTrain.shape[0], xTrain.shape[1]))
+    xTest = np.reshape(xTest, (xTest.shape[0], xTest.shape[1]))
+    
     #Need to figure out what these values are going to be
     #Are we just going to feed the previous xTrain, xTest arrays into the AE?
     #Or something else?
@@ -36,7 +48,7 @@ Train a SVM on a reduced input. So input data which has been processed through
 the Convolutional AutoEncoder.
 """
 def reducedSVM(dataset="worldbuilding", mini=False, folds=5):
-    dimReduction(dataset, mini, folds)
+    xTrain, yTrain, xTest, yTest = dimReduction(dataset, mini, folds)
 
     return svm.initSVM(xTrain, yTrain)
 
@@ -50,9 +62,11 @@ and transform text to look like it was made by 8291. For humans, we could show p
 of a similar style, retrieved from users in the equivalence class.
 
 To make it happy, xInput should be array-like
+Passing in a model is not an ideal solution. I should have my own SVM class which has a predict
+method to specify the equivalence class method and input to predict.
 """
-def svmPredict(xInput):
-    pass
+def svmPredict(model, xInput, equivClass=Equivs.JUMP):
+    return svm.predict(model, xInput, equivClass)
 
 """
 This is the main file for classification of course, and this is, well, the main method.
@@ -66,14 +80,20 @@ of the same writing style.
 def main():
     myParser = ArgumentParser()
 
-    myParser.add_argument("-d", "--dataset", dest="dataset", metavar="dataset", default="worldbuilding",
+    myParser.add_argument("--dataset", "-d", default="worldbuilding",
                         help="The dataset to use for classification purposes")
+    myParser.add_argument("--train", "-t", default=False, action="store_true",
+                        help="Debug argument to train the SVM on a reduced dataset. Default: True")
+    myParser.add_argument("--mini", "-m", default=True, action="store_false",
+                        help="Whether a small subsection of the dataset will be used for training."
+                            + "Default: False")
+    myParser.add_argument("--folds", default=5, type=int,
+                        help="The number of folds used for cross-fold validation.")
 
     myArgs = myParser.parse_args()
 
+    if myArgs.train:
+        reducedSVM(myArgs.dataset, myArgs.mini, myArgs.folds)
+
 if __name__ == "__main__":
-    xTrain, yTrain, xTest, yTest = dimReduction()
-
-    mySVM() = svm.initSVM(xTrain, yTrain)
-
-    #From here we can predict equivalence classes by using the svm.predict() method
+    main()

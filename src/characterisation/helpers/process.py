@@ -6,7 +6,7 @@ from characterisation.helpers.stack import execRestrict
 from characterisation.helpers.xTract import execXtract
 
 buPath = os.path.dirname(os.path.realpath(__file__))
-dataPath = os.path.join(buPath, "..", "..", "data")
+dataPath = os.path.join(buPath, "..", "..", "..", "data")
 
 worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
@@ -50,13 +50,13 @@ if __name__ == "__main__":
     argParser = ArgumentParser()
 
     #This can be expanded for multiple different datasets
-    argParser.add_argument("-d", "--dataset", dest="dataset", metavar="dataset", default="worldbuilding",
+    argParser.add_argument("-d", "--dataset", dest="dataset", default="worldbuilding",
                         help="The dataset to run feature extraction")
     #This can also be expanded for multiple filetypes
-    argParser.add_argument("-f", "--filetype", dest="fileType", metavar="fileType", default="Posts",
+    argParser.add_argument("-f", "--filetype", dest="fileType", default="Posts",
                         help="The file to extract features")
 
-    argParser.add_argument("-l", "--limit", dest="limit", metavar="limit", type=int,
+    argParser.add_argument("-l", "--limit", dest="limit", type=int, default=1024,
                         help="Sets a limit on the number of rows to extract from the dataset")
 
 

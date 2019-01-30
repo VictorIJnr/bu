@@ -21,7 +21,7 @@ rowLimit = 512
 
 dataset = worldbuilding
 buPath = os.path.dirname(os.path.realpath(__file__))
-dataPath = os.path.join(buPath, "..", "..", "data")
+dataPath = os.path.join(buPath, "..", "..", "..", "data")
 
 def cleanBody(df, index, row):
     oldBody = row["Body"]
@@ -124,19 +124,30 @@ Filters a dataset to only include users which have reached a provided threshold
 def execRestrict(myDataset, limit=rowLimit):
     allPosts = None
     allComments = None
-    
-    print("Loading data into dataframe...")
 
     if myDataset == "worldbuilding":
         dataset = worldbuilding
-        allPosts = pd.read_csv(os.path.join(dataPath, worldbuilding, "Posts.csv"))
-        allComments = pd.read_csv(os.path.join(dataPath, worldbuilding, "Comments.csv"))
     elif myDataset == "serverfault":
         dataset = serverfault
-        allPosts = pd.read_csv(os.path.join(dataPath, serverfault, "Posts.csv"))
-        allComments = pd.read_csv(os.path.join(dataPath, serverfault, "Comments.csv"))
+
+    print("Loading data into dataframe...")
+    #Load a cached dataframe pickle file if it exists
+    try:
+        print("Attempting to load a cached dataframe...")
+        allPosts = fileIO.loadPickle(f"dataframe_{dataset.split('.')[0]}_posts.pkl")
+        allComments = fileIO.loadPickle(f"dataframe_{dataset.split('.')[0]}_comments.pkl")
+    except FileNotFoundError:
+        print("A cached dataframe could not be found.\nBuilding from scratch...\n")
+        allPosts = pd.read_csv(os.path.join(dataPath, dataset, "Posts.csv"))
+        allComments = pd.read_csv(os.path.join(dataPath, dataset, "Comments.csv"))
+
+        fileIO.savePickle(allPosts, f"dataframe_{dataset.split('.')[0]}_posts.pkl")
+        fileIO.savePickle(allComments, f"dataframe_{dataset.split('.')[0]}_comments.pkl")
+    else:
+        print("Cached dataframe located...\n")
 
     print(f"Initial number of Posts:\t{allPosts.shape[0]}")
+
     newPosts, _, _ = restrict(allPosts, allComments)
 
     newPosts = newPosts[:limit] if limit is not None else newPosts
