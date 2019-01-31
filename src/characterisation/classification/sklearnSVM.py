@@ -1,13 +1,17 @@
 import numpy as np
 
+from argparse import ArgumentParser
 from pprint import pprint
 
 from helpers import fileIO
 from .sklearnHelper import hyperSearch
 from .sklearnHelper import pullData, filteredMap
-from .equiv import jumpy, userCentiles, scoreDistri, Equivs
+from .equiv import jumpyExperimental, userCentilesExperimental, scoreDistriExperimental, Equivs
 
 from sklearn.svm import SVC
+
+worldbuilding = "worldbuilding.stackexchange.com"
+serverfault = "serverfault.com"
 
 """
 This should retrieve the top x models found from the searching cross-validation
@@ -20,11 +24,12 @@ def pullTopX(num=5):
 """
 Trains a SVM for user classification
 """
-def initSVM(trainX, trainY, loadModel=False):
+def initSVM(trainX, trainY, loadModel=False, searchNum=5):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
     paramDist = {
-        "kernel": ["linear", "poly", "rbf", "sigmoid"],
+        "kernel": ["rbf", "sigmoid"],
+        # "kernel": ["linear", "poly", "rbf", "sigmoid"],
         "degree": list(range(6)),
         "gamma": ["auto", "scale", 0.01, 0.05, 0.1, 0.15, 0.2],
         "coef0": np.linspace(0, 1, num=21), #21 to accomodate for the endpoint (1)
@@ -37,9 +42,12 @@ def initSVM(trainX, trainY, loadModel=False):
     #Run that search in the background of a lab machine
     #That calculation is actually wrong, I haven't recalculated it but it'll be MUCH longer
     if loadModel:
-        classy = loadSVM()
+        try:
+            classy = loadSVM()
+        except:
+            return initSVM(trainX, trainY, searchNum=searchNum)
     else:
-        classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=5)
+        classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)
         # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
         # print(type(classy.cv_results_))
@@ -72,19 +80,24 @@ def loadSVM():
 """
 Runs experiments on each of the different methods to determine equivalence classes
 """
-def testEquiv():
+def testEquiv(loadModel=False):
     trainX, trainY, testX, testY = pullData()
-    classy = initSVM(trainX, trainY, True)
+    classy = initSVM(trainX, trainY, loadModel=loadModel)
 
     predictProbs = classy.predict_proba(testX)
     predictions = classy.predict(testX)
 
     mapping = filteredMap()
 
-    scoreDistri(predictProbs, testY)
+    scoreDistriExperimental("worldbuilding", predictProbs, testY)
     
-    jumpy(predictProbs, testY)
-    userCentiles(predictProbs, testY)
+    jumpyExperimental("worldbuilding", predictProbs, testY)
+    userCentilesExperimental("worldbuilding", predictProbs, testY)
 
 if __name__ == "__main__":
-    testEquiv()
+    myParser = ArgumentParser()
+
+    myParser.add_argument("--load", action="store_true")
+    myArgs = myParser.parse_args()
+
+    testEquiv(loadModel=myArgs.load)

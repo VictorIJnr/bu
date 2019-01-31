@@ -196,9 +196,11 @@ def filterUsers(df=None, threshold=5):
 Creates and returns a dictionary of users passing a given threshold
 The supplied threshold, which should always be equal to 'folds'
 """
-def filteredMap(df=None, threshold=5):
+def filteredMap(df=None, dataset=None, threshold=5):
     if df is None:
         df = __loadData()
+    if dataset is not None:
+        pass
 
     threshold += 1
 

@@ -47,7 +47,7 @@ def dimReduction(dataset="worldbuilding", mini=False, folds=5):
 Train a SVM on a reduced input. So input data which has been processed through
 the Convolutional AutoEncoder.
 """
-def reducedSVM(dataset="worldbuilding", mini=False, folds=5):
+def reducedSVM(dataset="worldbuilding", mini=True, folds=5, load=False):
     xTrain, yTrain, xTest, yTest = dimReduction(dataset, mini, folds)
 
     return svm.initSVM(xTrain, yTrain)

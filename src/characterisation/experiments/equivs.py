@@ -20,6 +20,8 @@ dataset - on a model which has been sufficiently trained on extracted features w
 been reduced. Through the ConvAE ofc.  
 """
 def main():
+    mySVM = reducedSVM(mini=False, load=True)
+    
     pass
 
 if __name__ == "__main__":
