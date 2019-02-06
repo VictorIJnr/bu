@@ -84,7 +84,7 @@ def main():
                         help="The dataset to use for classification purposes")
     myParser.add_argument("--train", "-t", default=False, action="store_true",
                         help="Debug argument to train the SVM on a reduced dataset. Default: True")
-    myParser.add_argument("--mini", "-m", default=True, action="store_false",
+    myParser.add_argument("--mini", "-m", default=False, action="store_true",
                         help="Whether a small subsection of the dataset will be used for training."
                             + "Default: False")
     myParser.add_argument("--folds", default=5, type=int,

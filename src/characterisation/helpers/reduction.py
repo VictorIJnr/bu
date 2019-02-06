@@ -20,10 +20,11 @@ as long as it's resonable.
 
 This has a name other than initAE because python doesn't like overloading
 """
-def initDatasetAE(dataset="serverfault", factor=16, mini=True):
+def initDatasetAE(dataset="serverfault", factor=4, mini=True,
+                    optimizer="adadelta", loss="mean_squared_error", returnHistory=False):
     xTrain, _, xTest, _ = skh.split(dataset, mini=mini)
 
-    return initAE(xTrain, xTest, factor)
+    return initAE(xTrain, xTest, factor, optimizer, loss, returnHistory)
 
 """
 Create the AutoEncoder model which will perform feature set reduction
@@ -32,7 +33,8 @@ factor dictates the amount of dimension reduction
 A factor of 16 takes the input down from 305-dimensional to being 80-dimensional
 The output shape of the encoder is (?, 20, 4) 
 """                
-def initAE(xTrain, xTest, factor=16):
+def initAE(xTrain, xTest, factor=4, optimizer="adadelta", loss="mean_squared_error",
+            returnHistory=False):
     numFeatures = xTrain.shape[1]
     numUsers = xTrain.shape[0]
     testUsers = xTest.shape[0]
@@ -56,26 +58,31 @@ def initAE(xTrain, xTest, factor=16):
 
     convAuto = decoder(encoder.output)
     convAuto = Model(encoder.input, convAuto)
-    convAuto.compile(optimizer="adadelta", loss="binary_crossentropy")
+    convAuto.compile(optimizer=optimizer, loss=loss,
+                        metrics=["accuracy"])
 
     print(f"Conv Auto input shape {convAuto.input.shape}")
     print(f"Conv Auto output shape {convAuto.output.shape}")
 
-    convAuto.fit(xTrain, xTrain,
+    fitstory = convAuto.fit(xTrain, xTrain,
                     epochs=10, batch_size=128,
                     shuffle=True,
                     validation_data=(xTest, xTest),
                     callbacks=[TensorBoard(log_dir="/tmp/autoencoder")])
 
     convAuto.save("autoencoder1D.h5")
-    return convAuto
+
+    if returnHistory:
+        return convAuto, fitstory
+    else:
+        return convAuto
 
 """
 Creates the network responsible for encoding data
 Data is scaled down by a given factor
 This factor must be a square number given the current implementation
 """
-def initEncoder(trainShape, factor=16):
+def initEncoder(trainShape, factor=4):
     numFeatures = trainShape[1]
 
     #Deep AutoEncoding, scaling down by factor over the course of 4 layers
@@ -101,7 +108,7 @@ Creates the network responsible for decoding data
 Scales data up by a given factor
 Which must be a square number given the current implementation
 """
-def initDecoder(trainShape, factor=16):
+def initDecoder(trainShape, factor=4):
     numFeatures = trainShape[1]
     reducedSize = ceil(numFeatures / factor)
 
@@ -109,11 +116,13 @@ def initDecoder(trainShape, factor=16):
     inputLayer = Input(shape=(reducedSize, 4))
     xDec = Conv1D(4, 4, activation="relu", padding="same")(inputLayer)
     xDec = UpSampling1D(int(factor ** 0.5))(xDec)
-    xDec = Conv1D(8, 4, activation="relu")(xDec)
+    xDec = Conv1D(8, 4, activation="relu", padding="same")(xDec)
     xDec = UpSampling1D(int(factor ** 0.5))(xDec)
     xDec = Conv1D(1, 4, activation="relu")(xDec)
 
     decoder = Model(inputLayer, xDec)
+
+    print(f"Decoder output shape {decoder.output.shape}\n")
     return decoder
 
 if __name__ == "__main__":

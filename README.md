@@ -31,3 +31,23 @@ Follow these steps and everything will be absolutely dandy. Don't worry, you can
     + You'll have a bash shell in front of you; if you've never used docker before, you're now inside the container. It's like if a VM went on a diet and could share data with other VMs. Nothing scary.
     + Use the shell to poke around the source code or any data I'm using. If I've finished distbu, you won't have a data/ folder to play around with.
     + But you can run something basic like `python -m characterisation.stack` from the src/ directory to see what it's like to filter the original dataset. Head's up though, it's not exactly exciting.
+
+## Demoing bu
+Okay, so this section is pretty much just for me to show people that bu works. Feel free to read this though, especially if you're using this in the most barebones way possible. Like, we're talking no pre-trained models and just a bunch of data barebones here. In that case, your a damn mental case.
+
+### Classification
+I'm going to start from the beginning. You think that'll be obvious, but I could very easily ignore the initial step(s) and be just fine.  
+I won't go low-level into the actual commands needed for demonstration, that was for the last section. This is going to be pretty high-level until the last couple of bits.
+
+Alright, you'll want to get yourself a dataset to work with. **_BUT_** it has to be one of the [StackExchange Datasets](https://archive.org/details/stackexchange). Yep. Just go for the _worldbuilding_ dataset. Plus download the _serverfault_ dataset so the Convolutional AutoEncoder can train itself. <sup>I can't be bothered to parameterise its training yet.</sup>  
+
+We good? Good. Now I'm going to assume you're using [docker](https://www.docker.com/), if not, [get it](https://www.docker.com/get-started). Why? Because I don't want to set up a virtual environment.  
+Take your downloaded data and **_yeet_** it into a docker volume; make sure you name it `distbu` as that's the name I use, and that's the name used in my scripts (looks like Timmy and I have something in common, ugh).  
+You'll need to run those scripts in order to set up the container.
+
+Alright, so now you have the container set up, we'll be in a position to demonstrate the capabilities of bu.
+
+### Transformation
+So, I haven't gotten to the part where bu performs "Natural Language Transformation" (I guess?) so I don't even know where I would start when it comes to demoing that. So for now, this'll remain blank because I don't know what to say. 
+
+Oh, but I just realised how much of a minefield Natural Language Transformation could become. Looks like this'll be fun.
