@@ -4,9 +4,10 @@ from argparse import ArgumentParser
 from pprint import pprint
 
 from helpers import fileIO
-from .sklearnHelper import hyperSearch
-from .sklearnHelper import pullData, filteredMap
-from .equiv import jumpyExperimental, userCentilesExperimental, scoreDistriExperimental, Equivs
+from characterisation.classification.sklearnHelper import hyperSearch
+from characterisation.classification.sklearnHelper import pullData, filteredMap
+from characterisation.classification.equiv import jumpy, userCentiles, scoreDistri, Equivs
+from characterisation.classification.equiv import jumpyExperimental, userCentilesExperimental, scoreDistriExperimental
 
 from sklearn.svm import SVC
 
@@ -63,13 +64,15 @@ Predicts the equivalence class of users, with the provided algorithm given a mod
 It's easier to use this method by passing a model instead of expecting to pass
 very specific data.
 """
-def predict(model, xInput, equivClass=Equivs.JUMP):
+def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding"):
+    probs = model.predict_proba(xInput)
+
     if equivClass == Equivs.JUMP:
-        pass
+        return jumpy(dataset, probs)
     elif equivClass == Equivs.SCORE_DIST:
-        pass
+        return scoreDistri(dataset, probs)
     elif equivClass == Equivs.PERCENTILES:
-        pass
+        return userCentiles(dataset, probs)
 
 """
 Loads a previously trained SVM model
@@ -89,10 +92,10 @@ def testEquiv(loadModel=False):
 
     mapping = filteredMap()
 
-    scoreDistriExperimental("worldbuilding", predictProbs, testY)
+    scoreDistriExperimental(predictProbs, testY, dataset="worldbuilding")
     
-    jumpyExperimental("worldbuilding", predictProbs, testY)
-    userCentilesExperimental("worldbuilding", predictProbs, testY)
+    jumpyExperimental(predictProbs, testY, dataset="worldbuilding")
+    userCentilesExperimental(predictProbs, testY, dataset="worldbuilding")
 
 if __name__ == "__main__":
     myParser = ArgumentParser()

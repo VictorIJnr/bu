@@ -1,4 +1,4 @@
-# Running experiments for the Convolutional AutoEncoder
+    # Running experiments for the Convolutional AutoEncoder
 
 from argparse import ArgumentParser
 from collections import defaultdict

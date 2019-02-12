@@ -2,8 +2,12 @@
 #May also generate appropriate graphs as a result
 
 from argparse import ArgumentParser
+from collections import defaultdict
 
-from characterisation.classibu import reducedSVM
+from characterisation.classibu import reducedSVM, svmPredict
+from characterisation.classification.equiv import Equivs
+from characterisation.classification.sklearnHelper import split
+
 
 def initSVM(xTrain, yTrain):
     reducedSVM(xTrain, yTrain)
@@ -20,9 +24,15 @@ dataset - on a model which has been sufficiently trained on extracted features w
 been reduced. Through the ConvAE ofc.  
 """
 def main():
-    mySVM = reducedSVM(mini=False, load=True)
+    mySVM, xTest, yTest = reducedSVM(mini=True, load=True, returnTest=True)
     
-    pass
+    equivs = [Equivs.JUMP, Equivs.SCORE_DIST, Equivs.PERCENTILES]
+
+    for equiv in equivs:
+        predictions = defaultdict(lambda: {})
+        equivClass = svmPredict(mySVM, xTest, equiv)
+
+        print(equiv.name)
 
 if __name__ == "__main__":
     main()

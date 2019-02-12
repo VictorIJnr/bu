@@ -16,7 +16,7 @@ dataset - the dataset which predictions are tested on
           currently a string but should be changed to an enum sometime
 """
 def jumpy(dataset, classPreds, filteredIDs=None):
-    filteredIDs = list(filteredMap(dataset).keys()) if filteredIDs is None else filteredIDs
+    filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
 
     # Mapping each userID to their corresponding probabilities
     userMap = makeUserMap(dataset, classPreds)
@@ -59,7 +59,7 @@ def scoreDistri(dataset, classPreds, percentile=90):
 User Percentiles equivalence class method.
 """
 def userCentiles(dataset, classPreds, percentile=90, filteredIDs=None):
-    filteredIDs = list(filteredMap(dataset).keys()) if filteredIDs is None else filteredIDs
+    filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
     numUsers = int(round(len(filteredIDs) * (1 / (100 - percentile))))
 
     # Mapping each userID to their corresponding probabilities
@@ -78,10 +78,10 @@ Experimental method for running experiments. What else?
 Using the jump-point equivalence class method; with a set of test data, determines both
 the individual (user) accuracy and class accuracy of a model, upon a set of predictions
 """
-def jumpyExperimental(dataset, classPreds, targetIndeces):
+def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
     claccuracy = 0
     indAccuracy = 0
-    filteredIDs = list(filteredMap(dataset).keys())
+    filteredIDs = list(filteredMap(dataset=dataset).keys())
 
     # Loop through all of the predictions and their corresponding actual values
     # Then determine their accuracies.
@@ -90,6 +90,8 @@ def jumpyExperimental(dataset, classPreds, targetIndeces):
         actualClass = targetIndeces[i]
         predictedProbs = classPreds[i]
 
+        userMap = makeUserMap(dataset, classPreds)
+        predictedClass = keyFromValue(userMap, np.amax(classPreds))
         equivClass = jumpy(dataset, predictedProbs, filteredIDs=filteredIDs)
         
         # Whether the target class appears in the equivalence class
@@ -115,7 +117,7 @@ def jumpyExperimental(dataset, classPreds, targetIndeces):
 Threshold function for users who have a score within the 90th percentile
 Where score relates to the probability of the user being of the desired class.
 """
-def scoreDistriExperimental(dataset, classPreds, targetIndeces, percentile=90):
+def scoreDistriExperimental(classPreds, targetIndeces, percentile=90, dataset="worldbuilding"):
     claccuracy = 0
     indAccuracy = 0
 
@@ -147,11 +149,11 @@ def scoreDistriExperimental(dataset, classPreds, targetIndeces, percentile=90):
 Thresholded against users (not scores) within the 90th percentile
 i.e. the 90th percentile of users when sorted by their scores
 """
-def userCentilesExperimental(dataset, classPreds, targetIndeces, percentile=90, verbose=False):
+def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=False, dataset="worldbuilding"):
     claccuracy = 0
     indAccuracy = 0
 
-    filteredIDs = list(filteredMap(dataset).keys())
+    filteredIDs = list(filteredMap(dataset=dataset).keys())
 
     for i in np.arange(classPreds.shape[0]):
         # The target class and the array of predicted probabilities
