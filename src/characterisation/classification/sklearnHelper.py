@@ -132,6 +132,7 @@ def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=Tr
     if verbose:
         print(f"Parameter search took {time() - start:.2f} seconds to explore {searchNum}"
             + " possibilities")
+        print(len(model.cv_results_))
         report(model.cv_results_)
 
     return model

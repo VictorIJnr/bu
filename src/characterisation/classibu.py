@@ -47,13 +47,14 @@ def dimReduction(dataset="worldbuilding", mini=False, folds=5):
 Train a SVM on a reduced input. So input data which has been processed through
 the Convolutional AutoEncoder.
 """
-def reducedSVM(dataset="worldbuilding", mini=True, folds=5, load=False, returnTest=False):
+def reducedSVM(dataset="worldbuilding", mini=True, folds=5, load=False, returnTest=False, 
+                searchNum=5, full=False):
     xTrain, yTrain, xTest, yTest = dimReduction(dataset, mini, folds)
 
     if returnTest:
-        return svm.initSVM(xTrain, yTrain, loadModel=load), xTest, yTest
+        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full), xTest, yTest
     else:
-        return svm.initSVM(xTrain, yTrain, loadModel=load)
+        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full)
 
 """
 Given an input, predicts the appropriate equivalence class it belongs to.

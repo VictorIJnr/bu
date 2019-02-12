@@ -4,7 +4,7 @@ from argparse import ArgumentParser
 from pprint import pprint
 
 from helpers import fileIO
-from characterisation.classification.sklearnHelper import hyperSearch
+from characterisation.classification.sklearnHelper import hyperSearch, fullHyperSearch
 from characterisation.classification.sklearnHelper import pullData, filteredMap
 from characterisation.classification.equiv import jumpy, userCentiles, scoreDistri, Equivs
 from characterisation.classification.equiv import jumpyExperimental, userCentilesExperimental, scoreDistriExperimental
@@ -25,12 +25,12 @@ def pullTopX(num=5):
 """
 Trains a SVM for user classification
 """
-def initSVM(trainX, trainY, loadModel=False, searchNum=5):
+def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
     paramDist = {
-        "kernel": ["rbf", "sigmoid"],
-        # "kernel": ["linear", "poly", "rbf", "sigmoid"],
+        # "kernel": ["rbf", "sigmoid"],
+        "kernel": ["linear", "poly", "rbf", "sigmoid"],
         "degree": list(range(6)),
         "gamma": ["auto", "scale", 0.01, 0.05, 0.1, 0.15, 0.2],
         "coef0": np.linspace(0, 1, num=21), #21 to accomodate for the endpoint (1)
@@ -46,15 +46,19 @@ def initSVM(trainX, trainY, loadModel=False, searchNum=5):
         try:
             classy = loadSVM()
         except:
-            return initSVM(trainX, trainY, searchNum=searchNum)
+            return initSVM(trainX, trainY, searchNum=searchNum, fullSearch=fullSearch)
     else:
-        classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)
-        # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
+        if fullSearch:
+            classy = fullHyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)
+            fileIO.savePickle(classy, f"classySVM_FullSearch.pkl")
+        else:
+            classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)
+            # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
 
-        # print(type(classy.cv_results_))
-        # pprint(classy.cv_results_)
+            # print(type(classy.cv_results_))
+            # pprint(classy.cv_results_)
 
-        fileIO.savePickle(classy, "classySVM.pkl")
+            fileIO.savePickle(classy, f"classySVM_{searchNum}Searches.pkl")
 
     return classy
 
@@ -100,7 +104,7 @@ def testEquiv(loadModel=False):
 if __name__ == "__main__":
     myParser = ArgumentParser()
 
-    myParser.add_argument("--load", action="store_true")
+    myParser.add_argument("--load", default=False, action="store_true")
     myArgs = myParser.parse_args()
 
     testEquiv(loadModel=myArgs.load)
