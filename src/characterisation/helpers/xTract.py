@@ -186,6 +186,7 @@ def execXtract(fileName):
     pprint(xTracted)
     print(f"{xTracted.shape[1]} different features")
     
+    print("Completed Extraction")
     xTracted.to_csv(os.path.join(dataPath, fileName[:-4] + "Extracted.csv"))
 
 

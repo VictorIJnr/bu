@@ -29,8 +29,8 @@ def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verb
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
     paramDist = {
-        # "kernel": ["rbf", "sigmoid"],
-        "kernel": ["linear", "poly", "rbf", "sigmoid"],
+        "kernel": ["rbf", "sigmoid"],
+        # "kernel": ["linear", "poly", "rbf", "sigmoid"],
         "degree": list(range(6)),
         "gamma": ["auto", "scale", 0.01, 0.05, 0.1, 0.15, 0.2],
         "coef0": np.linspace(0, 1, num=21), #21 to accomodate for the endpoint (1)
