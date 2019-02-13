@@ -3,7 +3,6 @@
 from argparse import ArgumentParser
 from helpers import fileIO
 
-import 
 import seaborn as sns
 
 from matplotlib import pyplot as plt
