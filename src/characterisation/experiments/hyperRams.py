@@ -1,6 +1,12 @@
 # Running experiments (kinda) for SVM hyperparameter search
 
 from argparse import ArgumentParser
+from helpers import fileIO
+
+import 
+import seaborn as sns
+
+from matplotlib import pyplot as plt
 
 from characterisation.classibu import reducedSVM
 
@@ -10,6 +16,12 @@ def main():
 def train(myArgs):
     reducedSVM(mini=myArgs.mini, folds=myArgs.folds, searchNum=myArgs.searchNum, 
         full=myArgs.fullSearch)
+
+def graphy(myArgs):
+    if myArgs.fullSearch:
+        hyper = fileIO.loadPickle("classySVM_FullSearch.pkl")
+    else:
+        hyper = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl")
 
 if __name__ == "__main__":
     myParser = ArgumentParser()
@@ -26,8 +38,11 @@ if __name__ == "__main__":
                             + "Default: False")
     myParser.add_argument("--folds", default=5, type=int,
                         help="The number of folds used for cross-fold validation.")
+    myParser.add_argument("--verbose", default=False, action="store_true")
 
     myArgs = myParser.parse_args()
 
     if myArgs.train:
         train(myArgs)
+    else:
+        graphy()

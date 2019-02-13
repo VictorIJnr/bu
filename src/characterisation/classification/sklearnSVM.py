@@ -25,7 +25,7 @@ def pullTopX(num=5):
 """
 Trains a SVM for user classification
 """
-def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False):
+def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verbose=False):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
     paramDist = {

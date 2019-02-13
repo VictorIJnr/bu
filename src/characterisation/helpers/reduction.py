@@ -33,7 +33,7 @@ factor dictates the amount of dimension reduction
 A factor of 16 takes the input down from 305-dimensional to being 80-dimensional
 The output shape of the encoder is (?, 20, 4) 
 """                
-def initAE(xTrain, xTest, factor=4, optimizer="adadelta", loss="mean_squared_error",
+def initAE(xTrain, xTest, factor=4, optimizer="adadelta", loss="mean_squared_logarithmic_error",
             returnHistory=False):
     numFeatures = xTrain.shape[1]
     numUsers = xTrain.shape[0]
