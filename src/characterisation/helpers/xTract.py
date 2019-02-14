@@ -10,17 +10,19 @@ from collections import Counter, defaultdict
 from functools import reduce
 from pprint import pprint
 
+from sklearn import preprocessing
+
 worldbuilding = "worldbuilding.stackexchange.com"
 serverfault = "serverfault.com"
 
 spacy = sp.load("en")
 
-debug = False
+debug = True
 
 miniXtract = True  
 singleXtract = False
 
-dataset = worldbuilding
+dataset = serverfault
 buPath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(buPath, "..", "..", "..", "data")
 
@@ -115,11 +117,15 @@ Chill out, this was just used for testing
 """
 def main():
     postDF = pd.read_csv(os.path.join(dataPath, dataset, "RestrictedPosts.csv"))
-    body = re.sub(re.compile("<.*?>|\r?\n|\r"), "", postDF.iloc[1]["Body"])
+    body = re.sub(re.compile("<.*?>|\r?\n|\r"), "", postDF.iloc[4]["Body"])
     doc = spacy(body)
     stopWords = loadStopWords()
     
     wordCounts = getWordCounts(doc)
+    print(f"WCs:\t{wordCounts}")
+    print(f"Len Doc:\t{len(doc)}")
+    print(f"MetaFreqs:\t{metaFrequencies(wordCounts)}")
+    print(f"Hapax Lego:\t{legomena(wordCounts)}")
     print(f"Total number of words:\t{totalNumWords(doc)}")
     print(f"Total number of characters:\t{totalNumChars(doc)}")
     print(f"Average Number of Words in a Sentence:\t{avgSentenceWords(doc)}")
@@ -169,11 +175,11 @@ def execXtract(fileName):
 
         #These are essentially meta-frequencies
         #So counting the number of words that appear once, twice, 3, 4, and 5 times
-        rowDict["legoHapax"] = legomena(wordCounts) / numWords
-        rowDict["legoDis"] = legomena(wordCounts, 2) / numWords
-        rowDict["legoTris"] = legomena(wordCounts, 3) / numWords
-        rowDict["legoTetrakis"] = legomena(wordCounts, 4) / numWords
-        rowDict["legoPentakis"] = legomena(wordCounts, 5) / numWords
+        rowDict["legoHapax"] = legomena(wordCounts)
+        rowDict["legoDis"] = legomena(wordCounts, 2)
+        rowDict["legoTris"] = legomena(wordCounts, 3)
+        rowDict["legoTetrakis"] = legomena(wordCounts, 4)
+        rowDict["legoPentakis"] = legomena(wordCounts, 5)
 
         #Putting all of the stop words as individual features
         stoppies = stopWordFreq(wordCounts)
@@ -183,12 +189,26 @@ def execXtract(fileName):
         rowList.append(rowDict)
 
     xTracted = pd.DataFrame(rowList)
+
+    normalizeCols(xTracted, ["legoHapax", "legoDis", "legoTris", "legoTetrakis", "legoPentakis",
+        "avgSentenceChars", "avgSentenceWords", "numChars", "numWords", "yule"])
+
     pprint(xTracted)
     print(f"{xTracted.shape[1]} different features")
     
-    print("Completed Extraction")
     xTracted.to_csv(os.path.join(dataPath, fileName[:-4] + "Extracted.csv"))
 
+
+def normalizeCol(df, col):
+    x = df[[col]].values.astype(float)
+    minMaxer = preprocessing.MinMaxScaler()
+
+    x = minMaxer.fit_transform(x)
+    df[col] = x
+
+def normalizeCols(df, cols):
+    for col in cols:
+        normalizeCol(df, col)
 
 if __name__ == "__main__":
     if debug: 

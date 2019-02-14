@@ -4,6 +4,8 @@ data/
 Offline/
 Submissions/
 
+*dataframe*.pkl
+
 # No one needs the gitignore lockfile
 .gitignore~
 

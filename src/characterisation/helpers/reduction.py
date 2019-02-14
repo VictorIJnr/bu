@@ -21,7 +21,7 @@ as long as it's resonable.
 This has a name other than initAE because python doesn't like overloading
 """
 def initDatasetAE(dataset="serverfault", factor=4, mini=True,
-                    optimizer="adadelta", loss="mean_squared_error", returnHistory=False):
+                    optimizer="adadelta", loss="mean_squared_logarithmic_error", returnHistory=False):
     xTrain, _, xTest, _ = skh.split(dataset, mini=mini)
 
     return initAE(xTrain, xTest, factor, optimizer, loss, returnHistory)
@@ -118,7 +118,7 @@ def initDecoder(trainShape, factor=4):
     xDec = UpSampling1D(int(factor ** 0.5))(xDec)
     xDec = Conv1D(8, 4, activation="relu", padding="same")(xDec)
     xDec = UpSampling1D(int(factor ** 0.5))(xDec)
-    xDec = Conv1D(1, 4, activation="relu")(xDec)
+    xDec = Conv1D(1, 4, activation="relu", padding="same")(xDec)
 
     decoder = Model(inputLayer, xDec)
 

@@ -3,6 +3,7 @@
 from argparse import ArgumentParser
 from helpers import fileIO
 
+import pandas as pd
 import seaborn as sns
 
 from matplotlib import pyplot as plt
@@ -17,10 +18,33 @@ def train(myArgs):
         full=myArgs.fullSearch)
 
 def graphy(myArgs):
+    hyperCV = None
     if myArgs.fullSearch:
-        hyper = fileIO.loadPickle("classySVM_FullSearch.pkl")
+        hyperCV = fileIO.loadPickle("classySVM_FullSearch.pkl").cv_results_
     else:
-        hyper = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl")
+        hyperCV = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
+
+    hyperCV["avgTestScore"] = None
+
+    del hyperCV["mean_fit_time"]
+    del hyperCV["std_fit_time"]
+    del hyperCV["mean_score_time"]
+    del hyperCV["std_score_time"]
+    del hyperCV["split0_test_score"]
+    del hyperCV["split1_test_score"]
+    del hyperCV["split2_test_score"]
+    del hyperCV["split3_test_score"]
+    del hyperCV["split4_test_score"]
+    del hyperCV["split0_train_score"]
+    del hyperCV["split1_train_score"]
+    del hyperCV["split2_train_score"]
+    del hyperCV["split3_train_score"]
+    del hyperCV["split4_train_score"]
+
+    print(hyperCV.keys())
+    hyperDF = pd.DataFrame(hyperCV)
+
+    hyperDF.to_csv(f"classySVM_{myArgs.searchNum}SearchesResults.csv")
 
 if __name__ == "__main__":
     myParser = ArgumentParser()
@@ -44,4 +68,4 @@ if __name__ == "__main__":
     if myArgs.train:
         train(myArgs)
     else:
-        graphy()
+        graphy(myArgs)

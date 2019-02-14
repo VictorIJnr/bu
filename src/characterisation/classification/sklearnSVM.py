@@ -28,6 +28,8 @@ Trains a SVM for user classification
 def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verbose=False):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
+    pprint(trainX)
+
     paramDist = {
         "kernel": ["rbf", "sigmoid"],
         # "kernel": ["linear", "poly", "rbf", "sigmoid"],
@@ -37,6 +39,13 @@ def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verb
         "shrinking": [True, False],
         "tol": [0.1, 0.01, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9]
     }
+
+    kernelDist = {
+        "kernel": ["linear", "poly", "rbf", "sigmoid"],
+        "gamma": ["auto"]
+    }
+
+    paramDist = kernelDist
 
     #I calculated it, doing a complete search with all of these parameters will take 
     #5 and a half days...
@@ -49,7 +58,7 @@ def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verb
             return initSVM(trainX, trainY, searchNum=searchNum, fullSearch=fullSearch)
     else:
         if fullSearch:
-            classy = fullHyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)
+            classy = fullHyperSearch(SVC(probability=True), paramDist, trainX, trainY)
             fileIO.savePickle(classy, f"classySVM_FullSearch.pkl")
         else:
             classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)

@@ -7,7 +7,7 @@ from collections import defaultdict
 from pprint import pprint
 from time import time
 
-from sklearn.model_selection import RandomizedSearchCV
+from sklearn.model_selection import RandomizedSearchCV, GridSearchCV
 from sklearn.model_selection import train_test_split
 
 from characterisation.helpers.process import dataProcess
@@ -87,6 +87,7 @@ def loadData(myDataset="worldbuilding", mini=True):
             dataProcess(myDataset, "Posts")
             return loadData(myDataset, mini)
 
+    inputData.drop("postID", axis=1, inplace=True)
     return inputData
 
 """
@@ -108,7 +109,9 @@ def split(myDataset="worldbuilding", mini=True, folds=5):
     inputData = filterUsers(df=loadData(myDataset, mini))
     
     userIDs = inputData.pop("userID").values.astype(np.uint32)
+    print(inputData.keys())
     inputData = inputData.values
+
 
     trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
                                                 test_size=1/folds, train_size=1-(1/folds),
@@ -142,13 +145,13 @@ def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=Tr
 Runs an exhaustive search through all the paramaters specified in the parameter distribution
 """
 def fullHyperSearch(searchModel, paramDist, trainX, trainY, verbose=True, cv=5):
-    model = GridSearchCV(searchModel, param_distributions=paramDist, cv=cv)
+    model = GridSearchCV(searchModel, param_grid=paramDist, cv=cv, verbose=2 if verbose else 0)
 
     start = time()
     model.fit(trainX, trainY)
     
     if verbose:
-        print(f"Parameter search took {time() - start:.2f} seconds to explore {searchNum}"
+        print(f"Parameter search took {time() - start:.2f} seconds to explore {len(model.cv_results_)}"
             + " possibilities")
         report(model.cv_results_)
     
