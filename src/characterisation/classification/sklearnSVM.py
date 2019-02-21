@@ -28,8 +28,6 @@ Trains a SVM for user classification
 def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verbose=False):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
-    pprint(trainX)
-
     paramDist = {
         "kernel": ["rbf", "sigmoid"],
         # "kernel": ["linear", "poly", "rbf", "sigmoid"],
@@ -42,7 +40,8 @@ def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verb
 
     kernelDist = {
         "kernel": ["linear", "poly", "rbf", "sigmoid"],
-        "gamma": ["auto"]
+        "coef0": np.linspace(0, 1, num=101),
+        "gamma": ["auto", "scale"]
     }
 
     paramDist = kernelDist

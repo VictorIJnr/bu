@@ -88,6 +88,7 @@ def loadData(myDataset="worldbuilding", mini=True):
             return loadData(myDataset, mini)
 
     inputData.drop("postID", axis=1, inplace=True)
+    inputData.drop("Unnamed: 0", axis=1, inplace=True)
     return inputData
 
 """
@@ -107,11 +108,15 @@ def split(myDataset="worldbuilding", mini=True, folds=5):
         dataset = serverfault
 
     inputData = filterUsers(df=loadData(myDataset, mini))
+
+    print("Input Data Keys in split")
+    pprint(inputData.keys())
     
     userIDs = inputData.pop("userID").values.astype(np.uint32)
-    print(inputData.keys())
     inputData = inputData.values
+    
 
+    print(f"inputData.shape in split\n{inputData.shape}")
 
     trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
                                                 test_size=1/folds, train_size=1-(1/folds),

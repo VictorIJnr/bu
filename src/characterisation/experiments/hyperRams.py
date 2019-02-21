@@ -8,14 +8,20 @@ import seaborn as sns
 
 from matplotlib import pyplot as plt
 
-from characterisation.classibu import reducedSVM
+from characterisation.classibu import reducedSVM, skippedSVM
 
 def main():
     pass
 
 def train(myArgs):
-    reducedSVM(mini=myArgs.mini, folds=myArgs.folds, searchNum=myArgs.searchNum, 
-        full=myArgs.fullSearch)
+    mySVM = None
+    if myArgs.skip:
+        mySVM = skippedSVM(mini=myArgs.mini, folds=myArgs.folds, searchNum=myArgs.searchNum, 
+            full=myArgs.fullSearch)
+    else:
+        mySVM = reducedSVM(mini=myArgs.mini, folds=myArgs.folds, searchNum=myArgs.searchNum, 
+            full=myArgs.fullSearch)
+        
 
 def graphy(myArgs):
     hyperCV = None
@@ -58,6 +64,9 @@ if __name__ == "__main__":
                         help="Whether to search the complete hyper-parameter space.")
     myParser.add_argument("--mini", "-m", default=False, action="store_true",
                         help="Whether a small subsection of the dataset will be used for training."
+                            + "Default: False")
+    myParser.add_argument("--skip", default=False, action="store_true",
+                        help="Whether to skip dimension reduction with the convolutional autoencoder"
                             + "Default: False")
     myParser.add_argument("--folds", default=5, type=int,
                         help="The number of folds used for cross-fold validation.")

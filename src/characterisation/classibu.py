@@ -22,7 +22,7 @@ def dimReduction(dataset="worldbuilding", mini=False, folds=5):
     xTrain, yTrain, xTest, yTest = skh.split(dataset, mini, folds)
 
     #"serverfault" could be an argument, but it's fine being constant
-    convAE = initDatasetAE(dataset="serverfault", mini=mini)
+    convAE = initDatasetAE(dataset="serverfault", mini=mini, factor=1)
 
     xTrain = np.reshape(xTrain, (xTrain.shape[0], xTrain.shape[1], 1))
     xTest = np.reshape(xTest, (xTest.shape[0], xTest.shape[1], 1))
@@ -52,6 +52,19 @@ def reducedSVM(dataset="worldbuilding", mini=True, folds=5, load=False, returnTe
                 searchNum=5, full=False):
     xTrain, yTrain, xTest, yTest = dimReduction(dataset, mini, folds)
 
+    if returnTest:
+        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full), xTest, yTest
+    else:
+        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full)
+
+"""
+Train an SVM on regular input. Retains the complete 304 dimensions by skipping dimension
+reduction with the convolutional autoencoder.
+"""
+def skippedSVM(dataset="worldbuilding", mini=True, folds=5, load=False, returnTest=False, 
+                searchNum=5, full=False):
+    xTrain, yTrain, xTest, yTest = skh.split(dataset, mini, folds)
+    
     if returnTest:
         return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full), xTest, yTest
     else:
