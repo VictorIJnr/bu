@@ -49,30 +49,30 @@ Train a SVM on a reduced input. So input data which has been processed through
 the Convolutional AutoEncoder.
 """
 def reducedSVM(dataset="worldbuilding", mini=True, folds=5, paramDist=None, load=False, 
-                returnTest=False, searchNum=5, full=False):
+                returnTest=False, searchNum=5, full=False, verbose=True):
     xTrain, yTrain, xTest, yTest = dimReduction(dataset, mini, folds)
 
     if returnTest:
         return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
-                            searchNum=searchNum, fullSearch=full), xTest, yTest
+                            searchNum=searchNum, fullSearch=full, verbose=verbose), xTest, yTest
     else:
         return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
-                            searchNum=searchNum, fullSearch=full)
+                            searchNum=searchNum, fullSearch=full, verbose=verbose)
 
 """
 Train an SVM on regular input. Retains the complete 303 dimensions by skipping dimension
 reduction with the convolutional autoencoder.
 """
 def skippedSVM(dataset="worldbuilding", mini=True, folds=5, paramDist=None, load=False, 
-                returnTest=False, searchNum=5, full=False):
+                returnTest=False, searchNum=5, full=False, verbose=True):
     xTrain, yTrain, xTest, yTest = skh.split(dataset, mini, folds)
     
     if returnTest:
         return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
-                            searchNum=searchNum, fullSearch=full), xTest, yTest
+                            searchNum=searchNum, fullSearch=full, verbose=verbose), xTest, yTest
     else:
         return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
-                            searchNum=searchNum, fullSearch=full)
+                            searchNum=searchNum, fullSearch=full, verbose=verbose)
 
 """
 Given an input, predicts the appropriate equivalence class it belongs to.

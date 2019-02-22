@@ -25,10 +25,8 @@ def pullTopX(num=5):
 """
 Trains a SVM for user classification
 """
-def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSearch=False, verbose=False):
-    print(f"{len(np.unique(trainY))} different training classes\n\n")
-
-    pprint(trainX)
+def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSearch=False, verbose=True):
+    print(f"{len(np.unique(trainY))} different training classes\n")
 
     if paramDist is None:
         paramDist = {
@@ -50,26 +48,18 @@ def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSe
 
         paramDist = kernelDist
 
-    #I calculated it, doing a complete search with all of these parameters will take 
-    #5 and a half days...
-    #Run that search in the background of a lab machine
-    #That calculation is actually wrong, I haven't recalculated it but it'll be MUCH longer
     if loadModel:
         try:
             classy = loadSVM()
         except:
-            return initSVM(trainX, trainY, searchNum=searchNum, fullSearch=fullSearch)
+            return initSVM(trainX, trainY, searchNum=searchNum, fullSearch=fullSearch, verbose=verbose)
     else:
         if fullSearch:
-            classy = fullHyperSearch(SVC(probability=True), paramDist, trainX, trainY)
+            classy = fullHyperSearch(SVC(probability=True), paramDist, trainX, trainY, verbose=verbose)
             fileIO.savePickle(classy, f"classySVM_FullSearch.pkl")
         else:
-            classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, searchNum=searchNum)
-            # classy = hyperSearch(SVC(), paramDist, trainX, trainY, searchNum=100)
-
-            # print(type(classy.cv_results_))
-            # pprint(classy.cv_results_)
-
+            classy = hyperSearch(SVC(probability=True), paramDist, trainX, trainY, 
+                                    searchNum=searchNum, verbose=verbose)
             fileIO.savePickle(classy, f"classySVM_{searchNum}Searches.pkl")
 
     return classy

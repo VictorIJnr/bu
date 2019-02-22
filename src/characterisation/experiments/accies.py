@@ -40,25 +40,25 @@ def main(myArgs):
     accResults = []
 
     for _, model in hyperDF.iterrows(): 
-        modelResults = defaultdict(lambda: {})
-        
-        print(f"Model type: {type(model)}")
-
-        print("\nThis model:")
+        print("\nCurrently evaluating this model:")
         pprint(model)
 
         paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
 
-        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, searchNum=1, returnTest=True)
-        claccuracy, indAccuracy = expPredict(myModel, xTest, yTest, equivClass=Equivs.SCORE_DIST)
+        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, searchNum=1, returnTest=True, verbose=False)
+        
+        for equiv in Equivs:
+            modelResults = defaultdict(lambda: {})
+            claccuracy, indAccuracy = expPredict(myModel, xTest, yTest, equivClass=equiv)
 
-        modelResults["User Accuracy"] = indAccuracy
-        modelResults["Class Accuracy"] = claccuracy
+            modelResults["Equivalence Method"] = equiv.name
+            modelResults["User Accuracy"] = indAccuracy
+            modelResults["Class Accuracy"] = claccuracy
 
-        for paramName, paramValue in model["params"].items():
-            modelResults[paramName] = paramValue
+            for paramName, paramValue in model["params"].items():
+                modelResults[paramName] = paramValue
 
-        accResults.append(modelResults)
+            accResults.append(modelResults)
     
     accResults = pd.DataFrame(accResults)
 

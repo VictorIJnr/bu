@@ -109,14 +109,9 @@ def split(myDataset="worldbuilding", mini=True, folds=5):
 
     inputData = filterUsers(df=loadData(myDataset, mini))
 
-    print("Input Data Keys in split")
-    pprint(inputData.keys())
-    
     userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
     
-
-    print(f"inputData.shape in split\n{inputData.shape}")
 
     trainData, testData, trainIDs, testIDs = train_test_split(inputData, userIDs,
                                                 test_size=1/folds, train_size=1-(1/folds),
@@ -126,16 +121,11 @@ def split(myDataset="worldbuilding", mini=True, folds=5):
 
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, 
-                                cv=cv, verbose=2 if verbose else 0)
+                                cv=cv, verbose=2 if verbose else 0, return_train_score=True,
+                                iid=True)
     
-    print("Training model...")
-
     start = time()
     model.fit(trainX, trainY)
-
-    #Only keep this whilst I have all those stupid warnings
-    #Some of the warnings aren't stupid, like the one warning me about the number of folds
-    print("")
 
     if verbose:
         print(f"Parameter search took {time() - start:.2f} seconds to explore {searchNum}"
@@ -150,7 +140,8 @@ def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=Tr
 Runs an exhaustive search through all the paramaters specified in the parameter distribution
 """
 def fullHyperSearch(searchModel, paramDist, trainX, trainY, verbose=True, cv=5):
-    model = GridSearchCV(searchModel, param_grid=paramDist, cv=cv, verbose=2 if verbose else 0)
+    model = GridSearchCV(searchModel, param_grid=paramDist, cv=cv, verbose=2 if verbose else 0, 
+                            return_train_score=True, iid=True)
 
     start = time()
     model.fit(trainX, trainY)
