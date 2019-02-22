@@ -145,6 +145,8 @@ def scoreDistriExperimental(classPreds, targetIndeces, percentile=90, dataset="w
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
 
+    return claccuracy, indAccuracy
+
 """
 Thresholded against users (not scores) within the 90th percentile
 i.e. the 90th percentile of users when sorted by their scores
@@ -187,6 +189,8 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
     print("User Percentiles")
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
+
+    return claccuracy, indAccuracy
 
 def keyFromValue(myDict, searchValue):
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]

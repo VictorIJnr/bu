@@ -48,27 +48,31 @@ def dimReduction(dataset="worldbuilding", mini=False, folds=5):
 Train a SVM on a reduced input. So input data which has been processed through
 the Convolutional AutoEncoder.
 """
-def reducedSVM(dataset="worldbuilding", mini=True, folds=5, load=False, returnTest=False, 
-                searchNum=5, full=False):
+def reducedSVM(dataset="worldbuilding", mini=True, folds=5, paramDist=None, load=False, 
+                returnTest=False, searchNum=5, full=False):
     xTrain, yTrain, xTest, yTest = dimReduction(dataset, mini, folds)
 
     if returnTest:
-        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full), xTest, yTest
+        return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
+                            searchNum=searchNum, fullSearch=full), xTest, yTest
     else:
-        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full)
+        return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
+                            searchNum=searchNum, fullSearch=full)
 
 """
-Train an SVM on regular input. Retains the complete 304 dimensions by skipping dimension
+Train an SVM on regular input. Retains the complete 303 dimensions by skipping dimension
 reduction with the convolutional autoencoder.
 """
-def skippedSVM(dataset="worldbuilding", mini=True, folds=5, load=False, returnTest=False, 
-                searchNum=5, full=False):
+def skippedSVM(dataset="worldbuilding", mini=True, folds=5, paramDist=None, load=False, 
+                returnTest=False, searchNum=5, full=False):
     xTrain, yTrain, xTest, yTest = skh.split(dataset, mini, folds)
     
     if returnTest:
-        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full), xTest, yTest
+        return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
+                            searchNum=searchNum, fullSearch=full), xTest, yTest
     else:
-        return svm.initSVM(xTrain, yTrain, loadModel=load, searchNum=searchNum, fullSearch=full)
+        return svm.initSVM(xTrain, yTrain, paramDist=paramDist, loadModel=load, 
+                            searchNum=searchNum, fullSearch=full)
 
 """
 Given an input, predicts the appropriate equivalence class it belongs to.

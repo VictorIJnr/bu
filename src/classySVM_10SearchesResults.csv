@@ -1,0 +1,5 @@
+,param_gamma,param_kernel,params,mean_test_score,std_test_score,rank_test_score,mean_train_score,std_train_score,avgTestScore
+0,auto,linear,"{'gamma': 'auto', 'kernel': 'linear'}",0.29411764705882354,0.11991100063138369,1,0.32416933844044077,0.028156400612013275,
+1,auto,poly,"{'gamma': 'auto', 'kernel': 'poly'}",0.29411764705882354,0.048210796207837865,1,0.3052528963919232,0.02145190478138916,
+2,auto,rbf,"{'gamma': 'auto', 'kernel': 'rbf'}",0.27941176470588236,0.1105853749898743,4,0.28800222253747576,0.040884936362509894,
+3,auto,sigmoid,"{'gamma': 'auto', 'kernel': 'sigmoid'}",0.29411764705882354,0.13143538816905642,1,0.28800222253747576,0.040884936362509894,

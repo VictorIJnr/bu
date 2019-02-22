@@ -1,6 +1,8 @@
 # Running experiments (kinda) for SVM hyperparameter search
 
 from argparse import ArgumentParser
+from pprint import pprint
+
 from helpers import fileIO
 
 import pandas as pd
@@ -30,7 +32,15 @@ def graphy(myArgs):
     else:
         hyperCV = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
 
-    hyperCV["avgTestScore"] = None
+    hyperCV["avgTestScore"] = hyperCV["split0_test_score"] + hyperCV["split1_test_score"] \
+                                + hyperCV["split2_test_score"] + hyperCV["split3_test_score"] \
+                                + hyperCV["split4_test_score"] 
+    hyperCV["avgTestScore"] /= 5 
+
+    hyperCV["avgTrainScore"] = hyperCV["split0_train_score"] + hyperCV["split1_train_score"] \
+                                + hyperCV["split2_train_score"] + hyperCV["split3_train_score"] \
+                                + hyperCV["split4_train_score"] 
+    hyperCV["avgTrainScore"] /= 5 
 
     del hyperCV["mean_fit_time"]
     del hyperCV["std_fit_time"]
@@ -46,11 +56,27 @@ def graphy(myArgs):
     del hyperCV["split2_train_score"]
     del hyperCV["split3_train_score"]
     del hyperCV["split4_train_score"]
+    del hyperCV["params"]
 
     print(hyperCV.keys())
     hyperDF = pd.DataFrame(hyperCV)
 
-    hyperDF.to_csv(f"classySVM_{myArgs.searchNum}SearchesResults.csv")
+    pprint(hyperDF)
+
+    # liney = sns.lineplot(x="param_coef0", y="avgTestScore", hue="param_kernel", data=hyperDF)
+    # liney = sns.scatterplot(x="param_coef0", y="avgTestScore", hue="param_kernel", data=hyperDF)
+    liney = sns.heatmap(hyperDF["avgTestScore"].corr(hyperDF["avgTrainScore"]))
+    # liney = sns.heatmap(hyperDF.corr())
+    liney = liney.get_figure()
+
+    liney.savefig("Heatmappy.png")
+    # liney.savefig("CoefKernels.png")
+    plt.show()
+
+    if myArgs.fullSearch:
+        hyperDF.to_csv(f"classySVM_FullSearchResults.csv")
+    else:
+        hyperDF.to_csv(f"classySVM_{myArgs.searchNum}SearchesResults.csv")
 
 if __name__ == "__main__":
     myParser = ArgumentParser()

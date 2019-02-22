@@ -25,26 +25,30 @@ def pullTopX(num=5):
 """
 Trains a SVM for user classification
 """
-def initSVM(trainX, trainY, loadModel=False, searchNum=5, fullSearch=False, verbose=False):
+def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSearch=False, verbose=False):
     print(f"{len(np.unique(trainY))} different training classes\n\n")
 
-    paramDist = {
-        "kernel": ["rbf", "sigmoid"],
-        # "kernel": ["linear", "poly", "rbf", "sigmoid"],
-        "degree": list(range(6)),
-        "gamma": ["auto", "scale", 0.01, 0.05, 0.1, 0.15, 0.2],
-        "coef0": np.linspace(0, 1, num=21), #21 to accomodate for the endpoint (1)
-        "shrinking": [True, False],
-        "tol": [0.1, 0.01, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9]
-    }
+    pprint(trainX)
 
-    kernelDist = {
-        "kernel": ["linear", "poly", "rbf", "sigmoid"],
-        "coef0": np.linspace(0, 1, num=101),
-        "gamma": ["auto", "scale"]
-    }
+    if paramDist is None:
+        paramDist = {
+            "kernel": ["rbf", "sigmoid"],
+            # "kernel": ["linear", "poly", "rbf", "sigmoid"],
+            "degree": list(range(6)),
+            "gamma": ["auto", "scale", 0.01, 0.05, 0.1, 0.15, 0.2],
+            "coef0": np.linspace(0, 1, num=21), #21 to accomodate for the endpoint (1)
+            "shrinking": [True, False],
+            "tol": [0.1, 0.01, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9]
+        }
 
-    paramDist = kernelDist
+        kernelDist = {
+            "kernel": ["linear", "poly", "rbf", "sigmoid"],
+            # "coef0": np.linspace(0, 1, num=21),
+            "gamma": np.linspace(0.1, 1, num=19)
+            # "gamma": ["scale"]
+        }
+
+        paramDist = kernelDist
 
     #I calculated it, doing a complete search with all of these parameters will take 
     #5 and a half days...
@@ -85,6 +89,22 @@ def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding"):
         return scoreDistri(dataset, probs)
     elif equivClass == Equivs.PERCENTILES:
         return userCentiles(dataset, probs)
+
+"""
+Experimental method to predict the equivalence class of users
+
+Unlike the non-experimental version, this uses the experimental equiv class
+methods to return the accuracies instead of the predicted class.
+"""
+def expPredict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding"):
+    probs = model.predict_proba(xInput)
+
+    if equivClass == Equivs.JUMP:
+        return jumpyExperimental(dataset, probs)
+    elif equivClass == Equivs.SCORE_DIST:
+        return scoreDistriExperimental(dataset, probs)
+    elif equivClass == Equivs.PERCENTILES:
+        return userCentilesExperimental(dataset, probs)
 
 """
 Loads a previously trained SVM model
