@@ -42,8 +42,8 @@ def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSe
         kernelDist = {
             "kernel": ["linear", "poly", "rbf", "sigmoid"],
             # "coef0": np.linspace(0, 1, num=21),
-            "gamma": np.linspace(0.1, 1, num=19)
-            # "gamma": ["scale"]
+            # "gamma": np.linspace(0.1, 1, num=19)
+             "gamma": ["scale"]
         }
 
         paramDist = kernelDist
