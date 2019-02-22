@@ -96,15 +96,15 @@ Experimental method to predict the equivalence class of users
 Unlike the non-experimental version, this uses the experimental equiv class
 methods to return the accuracies instead of the predicted class.
 """
-def expPredict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding"):
-    probs = model.predict_proba(xInput)
+def expPredict(model, xTest, yTest, equivClass=Equivs.JUMP, dataset="worldbuilding"):
+    probs = model.predict_proba(xTest)
 
     if equivClass == Equivs.JUMP:
-        return jumpyExperimental(dataset, probs)
+        return jumpyExperimental(probs, yTest, dataset=dataset)
     elif equivClass == Equivs.SCORE_DIST:
-        return scoreDistriExperimental(dataset, probs)
+        return scoreDistriExperimental(probs, yTest, dataset=dataset)
     elif equivClass == Equivs.PERCENTILES:
-        return userCentilesExperimental(dataset, probs)
+        return userCentilesExperimental(probs, yTest, dataset=dataset)
 
 """
 Loads a previously trained SVM model

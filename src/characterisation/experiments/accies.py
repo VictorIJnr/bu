@@ -6,8 +6,9 @@ from argparse import ArgumentParser
 from collections import defaultdict
 from pprint import pprint
 
-from characterisation.classibu import reducedSVM
+from characterisation.classibu import skippedSVM
 from characterisation.classification.equiv import Equivs 
+from characterisation.classification.sklearnSVM import expPredict 
 
 from helpers import fileIO
 
@@ -38,13 +39,33 @@ def main(myArgs):
 
     accResults = []
 
-    for model in hyperDF.iterrows(): 
+    for _, model in hyperDF.iterrows(): 
         modelResults = defaultdict(lambda: {})
+        
+        print(f"Model type: {type(model)}")
+
         print("\nThis model:")
         pprint(model)
 
-        myModel = reducedSVM(paramDist=model["params"], searchNum=1)
-        
+        paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
+
+        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, searchNum=1, returnTest=True)
+        claccuracy, indAccuracy = expPredict(myModel, xTest, yTest, equivClass=Equivs.SCORE_DIST)
+
+        modelResults["User Accuracy"] = indAccuracy
+        modelResults["Class Accuracy"] = claccuracy
+
+        for paramName, paramValue in model["params"].items():
+            modelResults[paramName] = paramValue
+
+        accResults.append(modelResults)
+    
+    accResults = pd.DataFrame(accResults)
+
+    if myArgs.full:
+        accResults.to_csv(f"classySVM_FullSearchAccResults.csv")
+    else:
+        accResults.to_csv(f"classySVM_{myArgs.searchNum}SearchAccResults.csv")
 
 def plotAllEquivs(myModel):
     pass
@@ -54,6 +75,8 @@ if __name__ == "__main__":
 
     myParser.add_argument("--full", default=False, action="store_true",
                             help="Whether to use the full search data. Default: False")
+    myParser.add_argument("--searchNum", "--num", default=10, metavar="NUM", type=int,
+                            help="The number of hyper-parameter possibilities to search for.")
 
     myArgs = myParser.parse_args()
 

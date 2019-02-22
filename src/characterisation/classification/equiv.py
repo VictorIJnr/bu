@@ -18,10 +18,6 @@ dataset - the dataset which predictions are tested on
 def jumpy(dataset, classPreds, filteredIDs=None):
     filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
 
-    # Mapping each userID to their corresponding probabilities
-    userMap = makeUserMap(dataset, classPreds)
-    predictedClass = keyFromValue(userMap, np.amax(classPreds))
-    
     sortedProbs = np.sort(classPreds)[::-1]
     diffs = np.absolute(np.diff(sortedProbs))
     
@@ -91,12 +87,14 @@ def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
         predictedProbs = classPreds[i]
 
         userMap = makeUserMap(dataset, classPreds)
-        predictedClass = keyFromValue(userMap, np.amax(classPreds))
         equivClass = jumpy(dataset, predictedProbs, filteredIDs=filteredIDs)
         
         # Whether the target class appears in the equivalence class
         classPredicted = userMap[actualClass] in equivClass
-        predicted = actualClass == predictedClass
+        predicted = userMap[actualClass] == equivClass[0]
+
+        print(f"EquivClass {equivClass}")
+        # print(f"fucking predicted {predicted}")
 
         # Counting all the misses to later calculate the class accuracy
         if classPredicted:
