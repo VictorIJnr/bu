@@ -82,6 +82,7 @@ def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
     claccuracy = 0
     indAccuracy = 0
     filteredIDs = list(filteredMap(dataset=dataset).keys())
+    equivClasses = []
 
     # Loop through all of the predictions and their corresponding actual values
     # Then determine their accuracies.
@@ -102,6 +103,8 @@ def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
         if predicted:
             indAccuracy += 1
 
+        equivClasses.append(equivClass)
+
     claccuracy = (claccuracy / classPreds.shape[0]) * 100
     indAccuracy = (indAccuracy / classPreds.shape[0]) * 100
 
@@ -109,7 +112,7 @@ def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
 
-    return claccuracy, indAccuracy
+    return claccuracy, indAccuracy, equivClasses
 
 """
 Threshold function for users who have a score within the 90th percentile
@@ -118,6 +121,8 @@ Where score relates to the probability of the user being of the desired class.
 def scoreDistriExperimental(classPreds, targetIndeces, percentile=90, dataset="worldbuilding"):
     claccuracy = 0
     indAccuracy = 0
+
+    equivClasses = []
 
     for i in np.arange(classPreds.shape[0]):
         actualClass = targetIndeces[i]
@@ -136,6 +141,8 @@ def scoreDistriExperimental(classPreds, targetIndeces, percentile=90, dataset="w
         if predicted:
             indAccuracy += 1
 
+        equivClasses.append(equivClass)
+
     claccuracy = (claccuracy / classPreds.shape[0]) * 100
     indAccuracy = (indAccuracy / classPreds.shape[0]) * 100
 
@@ -143,7 +150,7 @@ def scoreDistriExperimental(classPreds, targetIndeces, percentile=90, dataset="w
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
 
-    return claccuracy, indAccuracy
+    return claccuracy, indAccuracy, equivClasses
 
 """
 Thresholded against users (not scores) within the 90th percentile
@@ -154,6 +161,7 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
     indAccuracy = 0
 
     filteredIDs = list(filteredMap(dataset=dataset).keys())
+    equivClasses = []
 
     for i in np.arange(classPreds.shape[0]):
         # The target class and the array of predicted probabilities
@@ -180,6 +188,8 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
             claccuracy += 1
         if predicted:
             indAccuracy += 1
+
+        equivClasses.append(equivUsers)
     
     claccuracy = (claccuracy / classPreds.shape[0]) * 100
     indAccuracy = (indAccuracy / classPreds.shape[0]) * 100
@@ -188,7 +198,7 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
 
-    return claccuracy, indAccuracy
+    return claccuracy, indAccuracy, equivClasses
 
 def keyFromValue(myDict, searchValue):
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]

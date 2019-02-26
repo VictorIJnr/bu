@@ -12,9 +12,6 @@ from matplotlib import pyplot as plt
 
 from characterisation.classibu import reducedSVM, skippedSVM
 
-def main():
-    pass
-
 def train(myArgs):
     mySVM = None
     if myArgs.skip:
@@ -26,11 +23,7 @@ def train(myArgs):
         
 
 def graphy(myArgs):
-    hyperCV = None
-    if myArgs.fullSearch:
-        hyperCV = fileIO.loadPickle("classySVM_FullSearch.pkl").cv_results_
-    else:
-        hyperCV = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
+    hyperCV = loadCVResults(myArgs.fullSearch)
 
     hyperCV["avgTestScore"] = hyperCV["split0_test_score"] + hyperCV["split1_test_score"] \
                                 + hyperCV["split2_test_score"] + hyperCV["split3_test_score"] \
@@ -78,6 +71,25 @@ def graphy(myArgs):
     else:
         hyperDF.to_csv(f"classySVM_{myArgs.searchNum}SearchesResults.csv")
 
+def showDF(myArgs):
+    # hyperCV = loadCVResults(myArgs.fullSearch) 
+    # hyperDF = pd.DataFrame(hyperCV)
+
+    hyperDF = pd.read_csv("classySVM_FullSearchAccResults.csv")
+    hyperDF.sort_values("User Accuracy", ascending=False, inplace=True)
+
+    hyperDF.drop(["Unnamed: 0", "Unnamed: 0.1"], axis=1, inplace=True)
+
+    hyperDF.to_csv("classySVM_FullSearchAccResultsUsers.csv")
+
+    pprint(hyperDF)   
+    
+def loadCVResults(fullSearch):
+    if fullSearch:
+        return fileIO.loadPickle("classySVM_FullSearch.pkl").cv_results_
+    else:
+        return fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
+
 if __name__ == "__main__":
     myParser = ArgumentParser()
 
@@ -97,10 +109,13 @@ if __name__ == "__main__":
     myParser.add_argument("--folds", default=5, type=int,
                         help="The number of folds used for cross-fold validation.")
     myParser.add_argument("--verbose", default=False, action="store_true")
+    myParser.add_argument("--showDF", default=False, action="store_true")
 
     myArgs = myParser.parse_args()
 
     if myArgs.train:
         train(myArgs)
+    elif myArgs.showDF:
+        showDF(myArgs)
     else:
         graphy(myArgs)
