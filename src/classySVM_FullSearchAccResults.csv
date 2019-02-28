@@ -1,4 +1,4 @@
-,Class Accuracy,Class Size 1 Count,Class Size 2 Count,Equivalence Method,Largest Possible Class Size,Max Class Size,Mean Class Size,Min Class Size,User Accuracy,gamma,kernel
-0,11.11111111111111,17,1.0,JUMP,7,2,1.0555555555555556,1,11.11111111111111,scale,sigmoid
-1,16.666666666666664,11,7.0,SCORE_DIST,7,2,1.3888888888888888,1,11.11111111111111,scale,sigmoid
-2,11.11111111111111,18,0.0,PERCENTILES,7,1,1.0,1,11.11111111111111,scale,sigmoid
+,Class Accuracy,Class Size 1 Count,Class Size 10 Count,Class Size 11 Count,Class Size 12 Count,Class Size 13 Count,Class Size 14 Count,Class Size 15 Count,Class Size 16 Count,Class Size 17 Count,Class Size 18 Count,Class Size 19 Count,Class Size 2 Count,Class Size 20 Count,Class Size 21 Count,Class Size 22 Count,Class Size 23 Count,Class Size 24 Count,Class Size 25 Count,Class Size 3 Count,Class Size 4 Count,Class Size 5 Count,Class Size 6 Count,Class Size 7 Count,Class Size 8 Count,Class Size 9 Count,Equivalence Method,Largest Possible Class Size,Max Class Size,Mean Class Size,Min Class Size,User Accuracy,gamma,kernel
+0,8.921370967741936,593,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,417,0.0,0.0,0.0,0.0,0.0,0.0,792,168,7,1.0,4.0,2.0,0.0,JUMP,251,8,2.2983870967741935,1,4.838709677419355,scale,poly
+1,9.627016129032258,496,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,440,0.0,0.0,0.0,0.0,0.0,0.0,545,499,4,0.0,0.0,0.0,0.0,SCORE_DIST,251,5,2.5337701612903225,1,4.838709677419355,scale,poly
+2,47.479838709677416,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0,0.0,0.0,0.0,0.0,0.0,1984.0,0,0,0,0.0,0.0,0.0,0.0,PERCENTILES,251,25,25.0,25,4.838709677419355,scale,poly
