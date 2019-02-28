@@ -101,13 +101,13 @@ Just like __loadData(), pullData() will be kept for backwards compatability.
 I should eventually come up with a better name than "split()" though, I can't use pullData()
 yet because a bunch of other development stuff will break.
 """
-def split(myDataset="worldbuilding", mini=True, folds=5):
+def split(myDataset="worldbuilding", mini=True, folds=5, myDF=None):
     if myDataset == "worldbuilding":
         dataset = worldbuilding
     elif myDataset == "serverfault":
         dataset = serverfault
 
-    inputData = filterUsers(df=loadData(myDataset, mini))
+    inputData = filterUsers(df=loadData(myDataset, mini) if myDF is None else myDF)
 
     userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
