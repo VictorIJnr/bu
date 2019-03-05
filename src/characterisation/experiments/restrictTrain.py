@@ -8,12 +8,14 @@ import os
 import pandas as pd
 
 from argparse import ArgumentParser
+from collections import defaultdict
 from pprint import pprint
 
 from characterisation.helpers.stack import dataPath, serverfault, worldbuilding
 
-from characterisation.classification.sklearnSVM import initSVM
+from characterisation.classification.sklearnSVM import initSVM, expPredict
 from characterisation.classification.sklearnHelper import split
+from characterisation.classification.equiv import Equivs
 
 from characterisation.experiments.accies import testWrapper
 
@@ -121,7 +123,7 @@ def stoppies(myArgs):
 
     pprint(stopSVM.cv_results_)
     # createResultsDF(stopSVM, stoppyDF, "StopWordsResults.csv")
-    test1Model(stopSVM, stoppyDF, "StopWordsResults.csv")
+    test1Model(stopSVM, stoppyDF, "StopWordsSingleModelResults.csv")
 
 """
 Creates a DF pertaining to the effectiveness of a model, as determined by metrics.
@@ -139,7 +141,7 @@ def createResultsDF(myModel, dataDF, fileName):
 def test1Model(myModel, dataDF, fileName):
     resultsDF = formatCVResults(myModel.cv_results_)
 
-    resultsDF = runAccuracyTests(resultsDF, dataDF=dataDF)
+    resultsDF = runAccuracyTests(myModel, resultsDF, dataDF=dataDF)
 
 if __name__ == "__main__":
     myParser = ArgumentParser()
