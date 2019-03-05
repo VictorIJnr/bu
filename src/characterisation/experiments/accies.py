@@ -78,6 +78,7 @@ def testEquivs(myModel, xTest, yTest, modelParams=None):
         modelResults = defaultdict(lambda: {})
         claccuracy, indAccuracy, equivClasses = expPredict(myModel, xTest, yTest, equivClass=equiv)
 
+        #Loop over the equivalence class sizes I guess
         equivSizes = [len(equivClass) for equivClass in equivClasses]
         equivSizeCounter = Counter(equivSizes)
 
@@ -116,7 +117,8 @@ def plotEquivs(myArgs):
     acciesDF = None
 
     if myArgs.full:
-        acciesDF = pd.read_csv(f"classySVM_FullSearchAccResults.csv")
+        acciesDF = pd.read_csv(f"classySVM_FullSearchAccResultsFormatted.csv")
+        # acciesDF = pd.read_csv(f"classySVM_FullSearchAccResults.csv")
     else:
         acciesDF = pd.read_csv(f"classySVM_{myArgs.searchNum}SearchAccResults.csv")
 
@@ -124,6 +126,7 @@ def plotEquivs(myArgs):
 
     pprint(acciesDF[acciesDF["Equivalence Method"] == "JUMP"])
 
+    #Plot the relationship between class accuracy and class size
     plotti = sns.scatterplot(x="kernel", y="Class Accuracy", hue="Equivalence Method", data=acciesDF) \
                 .set_title("Relation between class accuracy and SVM Kernel")
     # plotti = sns.violinplot(x="Equivalence Method", y="Class Accuracy", data=acciesDF) \

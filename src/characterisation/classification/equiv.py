@@ -1,5 +1,7 @@
 import numpy as np
+import pandas as pd
 
+from collections import defaultdict
 from enum import Enum
 from pprint import pprint
 
@@ -78,15 +80,22 @@ Experimental method for running experiments. What else?
 Using the jump-point equivalence class method; with a set of test data, determines both
 the individual (user) accuracy and class accuracy of a model, upon a set of predictions
 """
-def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
+def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding", individual=False):
     claccuracy = 0
     indAccuracy = 0
     filteredIDs = list(filteredMap(dataset=dataset).keys())
     equivClasses = []
 
+    classSizeCounter = defaultdict(lambda: 0)
+    exactPredCounter = defaultdict(lambda: 0)
+    
+    experimentDF = []
+
     # Loop through all of the predictions and their corresponding actual values
     # Then determine their accuracies.
     for i in np.arange(classPreds.shape[0]):
+        testInstance = defaultdict(lambda: None)
+
         # The target class and the array of predicted probabilities
         actualClass = targetIndeces[i]
         predictedProbs = classPreds[i]
@@ -97,13 +106,21 @@ def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
         classPredicted = actualClass in equivClass
         predicted = actualClass == equivClass[0]
 
-        # Counting all the misses to later calculate the class accuracy
+        # Counting all the hits to later calculate the class accuracy
         if classPredicted:
             claccuracy += 1
         if predicted:
             indAccuracy += 1
 
         equivClasses.append(equivClass)
+        
+        testInstance["Actual Class"] = actualClass
+        testInstance["Predicted Class"] = equivClass[0]
+        testInstance["Equiv Class Size"] = len(equivClass)
+        testInstance["Class Predicted"] = classPredicted
+        testInstance["User Predicted"] = predicted
+
+        experimentDF.append(testInstance)
 
     claccuracy = (claccuracy / classPreds.shape[0]) * 100
     indAccuracy = (indAccuracy / classPreds.shape[0]) * 100
@@ -112,7 +129,12 @@ def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding"):
     print(f"Class Accuracy: {claccuracy:.2f}%")
     print(f"Individual Accuracy: {indAccuracy:.2f}%\n")
 
-    return claccuracy, indAccuracy, equivClasses
+    experimentDF = pd.DataFrame(experimentDF)
+
+    if individual:
+        return experimentDF
+    else:
+        return claccuracy, indAccuracy, equivClasses
 
 """
 Threshold function for users who have a score within the 90th percentile

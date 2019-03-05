@@ -21,6 +21,9 @@ from helpers import fileIO
 
 savePath = os.path.join(dataPath, "experiments")
 
+# Need to create a DF which shows the accuracy related to each equivalence class,
+# For each prediction, show the equivalence class size, the predicted equivalence class,
+# the actual class, and a boolean of whether the predicted class was within the equiv class
 
 """
 Loads the base dataset to be used for training and evaluating a model.
