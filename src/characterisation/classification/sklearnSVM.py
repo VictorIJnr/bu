@@ -90,11 +90,11 @@ def expPredict(model, xTest, yTest, equivClass=Equivs.JUMP, dataset="worldbuildi
     probs = model.predict_proba(xTest)
 
     if equivClass == Equivs.JUMP:
-        return jumpyExperimental(probs, yTest, dataset=dataset, individual)
+        return jumpyExperimental(probs, yTest, dataset=dataset, individual=individual)
     elif equivClass == Equivs.SCORE_DIST:
-        return scoreDistriExperimental(probs, yTest, dataset=dataset, individual)
+        return scoreDistriExperimental(probs, yTest, dataset=dataset, individual=individual)
     elif equivClass == Equivs.PERCENTILES:
-        return userCentilesExperimental(probs, yTest, dataset=dataset, individual)
+        return userCentilesExperimental(probs, yTest, dataset=dataset, individual=individual)
 
 """
 Loads a previously trained SVM model
