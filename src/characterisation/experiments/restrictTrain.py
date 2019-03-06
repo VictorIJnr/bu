@@ -23,7 +23,7 @@ from characterisation.experiments.accies import testWrapper
 from helpers import fileIO
 
 #Store every possible permutation on grouped features as possible
-Perms = Enum("Perms", "STOPPIES RICHNESS STOP_RICH")
+Perms = Enum("Perms", "STOPPIES RICHNESS AVERAGES STOP_RICH STOP_AVG RICH_AVG")
 
 savePath = os.path.join(dataPath, "experiments")
 
@@ -48,61 +48,74 @@ def loadDataset(mini):
 Returns the corresponding regex for the features for each possible permutation
 """
 def getPermRegex():
+    averageRegex = "^num|^avg|userID"
+    richnessRegex = "lego|yule|userID"
+    stoppiesRegex = "stop-|userID"
+
     if featureSet == Perms.STOPPIES:
-        return "stop-|userID"
+        return stoppiesRegex
+    elif featureSet == Perms.RICHNESS:
+        return richnessRegex
+    elif featureSet == Perms.AVERAGES:
+        return averageRegex
+    elif featureSet == Perms.STOP_RICH:
+        return f"{stoppiesRegex}|{richnessRegex}"
+    elif featureSet == Perms.STOP_AVG:
+        return f"{stoppiesRegex}|{averageRegex}"
+    elif featureSet == Perms.RICH_AVG:
+        return f"{richnessRegex}|{averageRegex}"
+    elif featureSet == Perms.STOP_RICH_AVG:
+        return f"{stoppiesRegex}|{richnessRegex}|{averageRegex}"
 
 """
-Run the experiment for all of the features related to the proportion of stop words in the 
-users corpus. 
+Runs the restrictive training experiment for a determined feature set on a user's corpus.
 """
-def stoppies(myArgs):
-    stopSVM = None
-    stoppyDF = loadDataset(myArgs.mini)
+def restrictTrain(myArgs):
+    determineFeatureSet(myArgs)
 
-    stoppyDF = stoppyDF[list(stoppyDF.filter(regex="stop-|userID"))]
-    splitData = split(myDF=stoppyDF)
+    print(featureSet)
 
-    if not myArgs.load:
-        xTrain, yTrain, _, _ = splitData
+    mySVM = None
+    myDF = loadDataset(myArgs.mini)
 
-        stopSVM = initSVM(xTrain, yTrain, fullSearch=True)
+    myDF = myDF[list(myDF.filter(regex=getPermRegex()))]
 
-        fileIO.savePickle(stopSVM, "StopWordsSVM.pkl")
-    else:
-        stopSVM = fileIO.loadPickle("StopWordsSVM.pkl")
-
-    pprint(stopSVM.cv_results_)
-    createResultsDF(stopSVM, splitData, "StopWordsResults.csv")
-    # test1Model(stopSVM, stoppyDF, featureSet.name + "SingleModelResults.csv")
-
-"""
-Run the experiment for all of the features related to vocabulary richness in the 
-users corpus. 
-"""
-def richies(myArgs):
-    richSVM = None
-    richDF = loadDataset(myArgs.mini)
-
-    richDF = richDF[list(richDF.filter(regex="lego|yule|userID"))]
-
-    pprint(richDF)
-    print(richDF.columns)
-
+    pprint(myDF.columns)
+    
     # Ensure that the train and test sets are distinct
-    splitData = split(myDF=richDF)
+    splitData = split(myDF=myDF)
+
+    pprint(splitData[0])
+
 
     if not myArgs.load:
         xTrain, yTrain, _, _ = splitData
 
         # Training a new SVM model and saving it to a file
-        richSVM = initSVM(xTrain, yTrain, fullSearch=True)
-        fileIO.savePickle(richSVM, f"{featureSet.name.title()}WordsSVM.pkl")
+        mySVM = initSVM(xTrain, yTrain, fullSearch=True)
+        fileIO.savePickle(mySVM, f"{featureSet.name.title()}WordsSVM.pkl")
     else:
-        richSVM = fileIO.loadPickle(f"{featureSet.name.title()}WordsSVM.pkl")
+        mySVM = fileIO.loadPickle(f"{featureSet.name.title()}WordsSVM.pkl")
 
-    pprint(richSVM.cv_results_)
-    createResultsDF(richSVM, splitData, f"{featureSet.name.title()}WordsSVM.csv")
-    # test1Model(richSVM, splitData, f"{featureSet.name.title()}SingleModelResults.csv")
+    createResultsDF(mySVM, splitData, f"{featureSet.name.title()}WordsSVM.csv")
+
+def determineFeatureSet(myArgs):
+    global featureSet
+
+    if myArgs.stoppies:
+        featureSet = Perms.STOPPIES
+        if myArgs.richness:
+            featureSet = Perms.STOP_RICH 
+            if myArgs.averages:
+                featureSet = Perms.STOP_RICH_AVG 
+        if myArgs.averages:
+            featureSet = Perms.STOP_AVG 
+    elif myArgs.richness:
+        featureSet = Perms.RICHNESS
+        if myArgs.averages:
+            featureSet = Perms.RICH_AVG 
+    elif myArgs.averages:
+        featureSet = Perms.AVERAGES
 
 """
 Creates a DF pertaining to the effectiveness of a model, as determined by metrics.
@@ -118,6 +131,9 @@ def createResultsDF(myModel, splitData, fileName):
     # pprint(resultsDF)
     resultsDF.to_csv(os.path.join(savePath, fileName))
 
+"""
+Runs the experiment against only the best model found from the Cross-Validation search.
+"""
 def test1Model(myModel, dataDF, fileName="SingleModelRestriction.csv"):
     resultsDF = testWrapper(myModel.cv_results_, splitData=split(myDF=dataDF), 
                             fileName=fileName, single=True)
@@ -136,6 +152,9 @@ if __name__ == "__main__":
     myParser.add_argument("--richness", default=False, action="store_true",
                         help="Train the subset of features pertaining to vocabulary richness."
                             + "Default: False")
+    myParser.add_argument("--averages", default=False, action="store_true",
+                        help="Train the subset of features pertaining to averages in a user's corpus."
+                            + "Default: False")
     myParser.add_argument("--mini", "-m", default=False, action="store_true",
                         help="Whether a small subsection of the dataset will be used for training."
                             + "Default: False")
@@ -145,13 +164,6 @@ if __name__ == "__main__":
 
     myArgs = myParser.parse_args()
 
-    if myArgs.stoppies:
-        featureSet = Perms.STOPPIES
+    determineFeatureSet(myArgs)
 
-        if myArgs.richness:
-            featureSet = Perms.STOP_RICH 
-
-        stoppies(myArgs)
-    elif myArgs.richness:
-        featureSet = Perms.RICHNESS
-        richies(myArgs)
+    restrictTrain(myArgs)
