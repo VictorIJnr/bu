@@ -64,20 +64,21 @@ def stoppies(myArgs):
         stopSVM = fileIO.loadPickle("StopWordsSVM.pkl")
 
     pprint(stopSVM.cv_results_)
-    # createResultsDF(stopSVM, stoppyDF, "StopWordsResults.csv")
-    test1Model(stopSVM, stoppyDF, featureSet.name + "SingleModelResults.csv")
+    createResultsDF(stopSVM, stoppyDF, "StopWordsResults.csv")
+    # test1Model(stopSVM, stoppyDF, featureSet.name + "SingleModelResults.csv")
 
 """
 Creates a DF pertaining to the effectiveness of a model, as determined by metrics.
 In particular the individual class accuracy and the equivalence class accuracy. 
 """
 def createResultsDF(myModel, dataDF, fileName):
-    resultsDF = testWrapper(myModel.cv_results_, splitData=split(myDF=dataDF))
+    resultsDF = testWrapper(myModel.cv_results_, splitData=split(myDF=dataDF),
+                            fileName=fileName)
 
     if not os.path.exists(savePath):
         os.makedirs(savePath)
 
-    pprint(resultsDF)
+    # pprint(resultsDF)
     resultsDF.to_csv(os.path.join(savePath, fileName))
 
 def test1Model(myModel, dataDF, fileName="SingleModelRestriction.csv"):

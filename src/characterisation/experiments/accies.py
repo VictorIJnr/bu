@@ -76,6 +76,9 @@ def runAccuracyTests(myDF, mini=False, splitData=None, fileName="", complete=Tru
     for file in cleanupFiles:
         os.remove(file)
 
+    accResults = pd.DataFrame(accResults).fillna(0)
+    accResults.to_csv(fileName)
+
     return pd.DataFrame(accResults).fillna(0)
 
 """
