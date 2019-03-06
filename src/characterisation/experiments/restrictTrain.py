@@ -9,11 +9,12 @@ import pandas as pd
 
 from argparse import ArgumentParser
 from collections import defaultdict
+from enum import Enum
 from pprint import pprint
 
 from characterisation.helpers.stack import dataPath, serverfault, worldbuilding
 
-from characterisation.classification.sklearnSVM import initSVM, expPredict
+from characterisation.classification.sklearnSVM import initSVM, expPredict, predict
 from characterisation.classification.sklearnHelper import split
 from characterisation.classification.equiv import Equivs
 
@@ -21,72 +22,13 @@ from characterisation.experiments.accies import testWrapper
 
 from helpers import fileIO
 
+#Store every possible permutation on grouped features as possible
+Perms = Enum("Perms", "STOPPIES")
+
 savePath = os.path.join(dataPath, "experiments")
 
-
-def formatCVResults(cvResults):
-    #Removing attributes surplus to our accuracy tests.
-    del cvResults["mean_fit_time"]
-    del cvResults["std_fit_time"]
-    del cvResults["mean_score_time"]
-    del cvResults["std_score_time"]
-    del cvResults["split0_test_score"]
-    del cvResults["split1_test_score"]
-    del cvResults["split2_test_score"]
-    del cvResults["split3_test_score"]
-    del cvResults["split4_test_score"]
-    del cvResults["split0_train_score"]
-    del cvResults["split1_train_score"]
-    del cvResults["split2_train_score"]
-    del cvResults["split3_train_score"]
-    del cvResults["split4_train_score"]
-
-    cvResults = pd.DataFrame(cvResults)
-    return cvResults.sort_values("rank_test_score")
-
-def runAccuracyTests(myModel, myDF, mini=False, dataDF=None):
-    accResults = []
-        
-    _, _, xTest, yTest = split(myDF=dataDF)
-
-    for equivTest in testEquivs(myModel, xTest, yTest):
-        accResults.append(equivTest)
-    
-    accResults = pd.DataFrame(accResults)
-    return accResults.fillna(0)
-
-def testEquivs(myModel, xTest, yTest):
-    equivResults = []
-
-    for equiv in Equivs:
-        print(f"Testing the {equiv.name} equivalence class.")
-        modelResults = defaultdict(lambda: {})
-        testDF = expPredict(myModel, xTest, yTest, equivClass=equiv, individual=True)
-
-        equivResults.append(testDF)
-
-        # #Loop over the equivalence class sizes I guess
-        # equivSizes = [len(equivClass) for equivClass in equivClasses]
-        # equivSizeCounter = Counter(equivSizes)
-
-        # modelResults["Equivalence Method"] = equiv.name
-        # modelResults["User Accuracy"] = indAccuracy
-        # modelResults["Class Accuracy"] = claccuracy
-        # modelResults["Min Class Size"] = np.amin(equivSizes)
-        # modelResults["Max Class Size"] = np.amax(equivSizes)
-        # modelResults["Mean Class Size"] = np.mean(equivSizes)
-        # modelResults["Largest Possible Class Size"] = len(np.unique(yTest))
-
-        # for i in np.arange(1, np.amax(equivSizes) + 1):
-        #     modelResults[f"Class Size {i} Count"] = equivSizeCounter[i]
-
-        # if modelParams is not None:
-        #     for paramName, paramValue in modelParams.items():
-        #         modelResults[paramName] = paramValue
-
-        # equivResults.append(dict(modelResults))
-    
-    return equivResults
+# Indicates the permutation of features being used
+featureSet = None
 
 # Need to create a DF which shows the accuracy related to each equivalence class,
 # For each prediction, show the equivalence class size, the predicted equivalence class,
@@ -123,14 +65,14 @@ def stoppies(myArgs):
 
     pprint(stopSVM.cv_results_)
     # createResultsDF(stopSVM, stoppyDF, "StopWordsResults.csv")
-    test1Model(stopSVM, stoppyDF, "StopWordsSingleModelResults.csv")
+    test1Model(stopSVM, stoppyDF, featureSet.name + "SingleModelResults.csv")
 
 """
 Creates a DF pertaining to the effectiveness of a model, as determined by metrics.
 In particular the individual class accuracy and the equivalence class accuracy. 
 """
 def createResultsDF(myModel, dataDF, fileName):
-    resultsDF = testWrapper(myModel.cv_results_, dataDF=dataDF)
+    resultsDF = testWrapper(myModel.cv_results_, splitData=split(myDF=dataDF))
 
     if not os.path.exists(savePath):
         os.makedirs(savePath)
@@ -138,10 +80,14 @@ def createResultsDF(myModel, dataDF, fileName):
     pprint(resultsDF)
     resultsDF.to_csv(os.path.join(savePath, fileName))
 
-def test1Model(myModel, dataDF, fileName):
-    resultsDF = formatCVResults(myModel.cv_results_)
+def test1Model(myModel, dataDF, fileName="SingleModelRestriction.csv"):
+    resultsDF = testWrapper(myModel.cv_results_, splitData=split(myDF=dataDF), 
+                            fileName=fileName, single=True)
 
-    resultsDF = runAccuracyTests(myModel, resultsDF, dataDF=dataDF)
+    if not os.path.exists(savePath):
+        os.makedirs(savePath)
+
+    resultsDF.to_csv(os.path.join(savePath, fileName))
 
 if __name__ == "__main__":
     myParser = ArgumentParser()
@@ -159,4 +105,6 @@ if __name__ == "__main__":
     myArgs = myParser.parse_args()
 
     if myArgs.stoppies:
+        featureSet = Perms.STOPPIES
+
         stoppies(myArgs)

@@ -20,8 +20,8 @@ dataset - the dataset which predictions are tested on
 def jumpy(dataset, classPreds, filteredIDs=None):
     filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
 
-    classProbs = {classID : probability for classID, probability in zip(filteredIDs, classPreds)}
-    predictedClass = keyFromValue(classProbs, np.amax(classPreds))
+    userMap = makeUserMap(dataset, classPreds)
+    predictedClass = keyFromValue(userMap, np.amax(classPreds))
 
     sortedProbs = np.sort(classPreds)[::-1]
     diffs = np.absolute(np.diff(sortedProbs))
@@ -35,7 +35,7 @@ def jumpy(dataset, classPreds, filteredIDs=None):
     # Splits the probabilities into 2 groups, one for the predicted equivalence class
     # Just dumping the rest in another one (which we don't care about)
     # This won't scale for multiple classes with identical probabilities
-    equivClass = [keyFromValue(classProbs, prob) for prob in sortedProbs[:int(diffIndex)]]
+    equivClass = [keyFromValue(userMap, prob) for prob in sortedProbs[:int(diffIndex)]]
 
     return equivClass
 
@@ -200,6 +200,8 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
     experimentDF = []
 
     for i in np.arange(classPreds.shape[0]):
+        testInstance = defaultdict(lambda: None)
+
         # The target class and the array of predicted probabilities
         actualClass = targetIndeces[i]
         predictedProbs = classPreds[i]

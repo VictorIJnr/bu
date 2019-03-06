@@ -71,7 +71,7 @@ It's easier to use this method by passing a model instead of expecting to pass
 very specific data.
 """
 def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding"):
-    probs = model.predict_proba(xInput)
+    probs = model.predict_proba(xInput)[0]
 
     if equivClass == Equivs.JUMP:
         return jumpy(dataset, probs)

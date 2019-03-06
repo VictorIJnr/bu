@@ -1,4 +1,5 @@
 #Experiment file testing against the accuracies of different models 
+import os
 
 import seaborn as sns
 import pandas as pd
@@ -10,7 +11,7 @@ from pprint import pprint
 
 from matplotlib import pyplot as plt
 
-from characterisation.classibu import skippedSVM
+from characterisation.classibu import skippedSVM, svmPredict
 from characterisation.classification.equiv import Equivs 
 from characterisation.classification.sklearnSVM import expPredict, initSVM 
 from characterisation.classification.sklearnHelper import split
@@ -44,33 +45,43 @@ def formatCVResults(cvResults):
 
 """
 Runs tests against the accuracy of models
+
+@param single indicates whether to test only the best performing model,
+    determined by the Cross-Validation
 """
-def runAccuracyTests(myDF, mini=False, dataDF=None):
+def runAccuracyTests(myDF, mini=False, splitData=None, fileName="", complete=True, single=False):
     accResults = []
+    # kernelValues = []
+    cleanupFiles = []
 
+    loopIters = 0
     for _, model in myDF.iterrows(): 
-        print("\nCurrently evaluating this model:")
-        pprint(model)
+        if loopIters == 1 and single:
+            break
 
-        myModel = None
-        paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
+        intermediateFile = fileName[:-4] + model["params"]["kernel"] + ".csv"
 
-        xTest, yTest = None, None
+        accResults.extend(modelAccTest(model, mini=mini, splitData=splitData, 
+                                        fileName=fileName, complete=complete))
 
-        if dataDF is None:
-            myModel, xTest, yTest = skippedSVM(paramDist=paramDist, mini=mini, searchNum=1,
-                                        returnTest=True, verbose=False)
-        else:
-            xTrain, yTrain, xTest, yTest = split(myDF=dataDF)
-            myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
+        pd.DataFrame(accResults).fillna(0).to_csv(intermediateFile)
         
-        for equivTest in testEquivs(myModel, xTest, yTest, model["params"]):
-            accResults.append(equivTest)
-    
-    accResults = pd.DataFrame(accResults)
-    return accResults.fillna(0)
+        #This could probably be determined from outside the loop
+        #I mean the array of possible values for the kernel parameter
+        # kernelValues.append(model[])
+        cleanupFiles.append(intermediateFile)
+        
+        loopIters += 1
 
-def testEquivs(myModel, xTest, yTest, modelParams=None):
+    for file in cleanupFiles:
+        os.remove(file)
+
+    return pd.DataFrame(accResults).fillna(0)
+
+"""
+Testing against all of the different equivalence classes
+"""
+def testEquivs(myModel, xTest, yTest, modelParams=None, fileName=""):
     equivResults = []
 
     for equiv in Equivs:
@@ -98,17 +109,84 @@ def testEquivs(myModel, xTest, yTest, modelParams=None):
                 modelResults[paramName] = paramValue
 
         equivResults.append(dict(modelResults))
+
+        pd.DataFrame(equivResults).to_csv(fileName)
     
     return equivResults
+
+"""
+Runs all of the accuracy tests incrementally such that all of the required CSVs are generated 
+line-by-line,
+Also synonymous to a "complete" CSV generation, checking against individual test classes
+"""
+def incrementalEquivsTests(myModel, xTest, yTest, modelParams=None, fileName=""):
+    equivResults = []
+
+    for i in np.arange(xTest.shape[0]):
+        print(f"Testing index {i + 1} of "
+               + f"{xTest.shape[0]} - {((i + 1)/ xTest.shape[0]) * 100:.3f}% done.",
+                end="\r")
+        
+        for equiv in Equivs:
+            result = svmPredict(myModel, xTest[i].reshape(1, -1), equiv)
+            modelDF = defaultdict(lambda: {})
+            
+            modelDF["Equiv Class"] = equiv.name
+            modelDF["Actual Class"] = yTest[i]
+            modelDF["Class Size"] = len(result)
+            modelDF["Correct Class"] = yTest[i] in result
+            modelDF["Largest Possible Class Size"] = len(np.unique(yTest))
+            modelDF["Predicted Class"] = result[0]
+
+            if modelParams is not None:
+                for paramName, paramValue in modelParams.items():
+                    modelDF[paramName] = paramValue
+
+            equivResults.append(dict(modelDF))
+
+            pd.DataFrame(equivResults).to_csv(fileName)
+    
+    return equivResults
+
+"""
+Tests a single model instance from the CV Results
+"""
+def modelAccTest(model, mini=False, splitData=None, fileName="", complete=True):
+    accResults = []
+
+    print("\nCurrently evaluating this model:")
+    pprint(model)
+
+    myModel = None
+    xTest, yTest = None, None
+    paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
+
+    if splitData is None:
+        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, mini=mini, searchNum=1,
+                                    returnTest=True, verbose=False)
+    else:
+        xTrain, yTrain, xTest, yTest = splitData
+        myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
+    
+    if complete:
+        accResults.extend(incrementalEquivsTests(myModel, xTest, yTest, 
+                            model["params"], fileName=fileName))
+    else:
+        accResults.extend(testEquivs(myModel, xTest, yTest, 
+                            model["params"], fileName=fileName))
+
+    pd.DataFrame(accResults).to_csv(fileName)
+    return accResults
 
 """
 Wraps the functionality of performing accuracy tests into one method dependant
 on having Cross-Validation results.
 """
-def testWrapper(cvResults, mini=False, dataDF=None):
+def testWrapper(cvResults, mini=False, splitData=None, fileName="", complete=True, single=False):
     resultsDF = formatCVResults(cvResults)
 
-    return runAccuracyTests(resultsDF, mini, dataDF)
+    return runAccuracyTests(resultsDF, mini, splitData, fileName=fileName,
+                            complete=complete, single=single)
 
 def plotEquivs(myArgs):
     # Set theme
@@ -148,7 +226,8 @@ def main(myArgs):
         cvResults = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
 
     #Stores the results for the accuracy tests
-    accResults = testWrapper(cvResults, myArgs.mini)
+    accResults = testWrapper(cvResults, myArgs.mini, 
+                                fileName=myArgs.fileName, complete=myArgs.complete)
 
     #Saving the results of the accuracy tests to a CSV
     if myArgs.full:
@@ -171,6 +250,10 @@ if __name__ == "__main__":
     myParser.add_argument("--mini", "-m", default=False, action="store_true",
                         help="Whether a small subsection of the dataset will be used for training."
                             + "Default: False")
+    myParser.add_argument("--fileName", default="AccuracyTests.csv",
+                        help="The file name to store the results as.")
+    myParser.add_argument("--complete", default=True, action="store_false",
+                        help="Flag to turn off using a complete-incremental approach")
 
     myArgs = myParser.parse_args()
 
