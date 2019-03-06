@@ -19,6 +19,16 @@ from characterisation.classification.sklearnHelper import split
 from helpers import fileIO
 
 """
+Wraps the functionality of performing accuracy tests into one method dependant
+on having Cross-Validation results.
+"""
+def testWrapper(cvResults, mini=False, splitData=None, fileName="", complete=True, single=False):
+    resultsDF = formatCVResults(cvResults)
+
+    return runAccuracyTests(resultsDF, mini, splitData, fileName=fileName,
+                            complete=complete, single=single)
+
+"""
 Formats the results for a previous Cross-Validation search over a distribution of 
 hyper-parameters. Only keeping attributes which are required for subsequent
 accuracy tests.
@@ -82,6 +92,36 @@ def runAccuracyTests(myDF, mini=False, splitData=None, fileName="", complete=Tru
     return pd.DataFrame(accResults).fillna(0)
 
 """
+Tests a single model instance from the CV Results
+"""
+def modelAccTest(model, mini=False, splitData=None, fileName="", complete=True):
+    accResults = []
+
+    print("\nCurrently evaluating this model:")
+    pprint(model)
+
+    myModel = None
+    xTest, yTest = None, None
+    paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
+
+    if splitData is None:
+        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, mini=mini, searchNum=1,
+                                    returnTest=True, verbose=False)
+    else:
+        xTrain, yTrain, xTest, yTest = splitData
+        myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
+    
+    if complete:
+        accResults.extend(incrementalEquivsTests(myModel, xTest, yTest, 
+                            model["params"], fileName=fileName))
+    else:
+        accResults.extend(testEquivs(myModel, xTest, yTest, 
+                            model["params"], fileName=fileName))
+
+    pd.DataFrame(accResults).to_csv(fileName)
+    return accResults
+
+"""
 Testing against all of the different equivalence classes
 """
 def testEquivs(myModel, xTest, yTest, modelParams=None, fileName=""):
@@ -137,7 +177,8 @@ def incrementalEquivsTests(myModel, xTest, yTest, modelParams=None, fileName="")
             modelDF["Equiv Class"] = equiv.name
             modelDF["Actual Class"] = yTest[i]
             modelDF["Class Size"] = len(result)
-            modelDF["Correct Class"] = yTest[i] in result
+            modelDF["Correct Class Predicted"] = yTest[i] in result
+            modelDF["Exact User Predicted"] = yTest[i] == result[0]
             modelDF["Largest Possible Class Size"] = len(np.unique(yTest))
             modelDF["Predicted Class"] = result[0]
 
@@ -150,46 +191,6 @@ def incrementalEquivsTests(myModel, xTest, yTest, modelParams=None, fileName="")
             pd.DataFrame(equivResults).to_csv(fileName)
     
     return equivResults
-
-"""
-Tests a single model instance from the CV Results
-"""
-def modelAccTest(model, mini=False, splitData=None, fileName="", complete=True):
-    accResults = []
-
-    print("\nCurrently evaluating this model:")
-    pprint(model)
-
-    myModel = None
-    xTest, yTest = None, None
-    paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
-
-    if splitData is None:
-        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, mini=mini, searchNum=1,
-                                    returnTest=True, verbose=False)
-    else:
-        xTrain, yTrain, xTest, yTest = splitData
-        myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
-    
-    if complete:
-        accResults.extend(incrementalEquivsTests(myModel, xTest, yTest, 
-                            model["params"], fileName=fileName))
-    else:
-        accResults.extend(testEquivs(myModel, xTest, yTest, 
-                            model["params"], fileName=fileName))
-
-    pd.DataFrame(accResults).to_csv(fileName)
-    return accResults
-
-"""
-Wraps the functionality of performing accuracy tests into one method dependant
-on having Cross-Validation results.
-"""
-def testWrapper(cvResults, mini=False, splitData=None, fileName="", complete=True, single=False):
-    resultsDF = formatCVResults(cvResults)
-
-    return runAccuracyTests(resultsDF, mini, splitData, fileName=fileName,
-                            complete=complete, single=single)
 
 def plotEquivs(myArgs):
     # Set theme

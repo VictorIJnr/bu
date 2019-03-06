@@ -23,7 +23,7 @@ from characterisation.experiments.accies import testWrapper
 from helpers import fileIO
 
 #Store every possible permutation on grouped features as possible
-Perms = Enum("Perms", "STOPPIES")
+Perms = Enum("Perms", "STOPPIES RICHNESS STOP_RICH")
 
 savePath = os.path.join(dataPath, "experiments")
 
@@ -45,6 +45,13 @@ def loadDataset(mini):
         return pd.read_csv(os.path.join(dataPath, worldbuilding, "RestrictedPostsExtracted.csv"))
 
 """
+Returns the corresponding regex for the features for each possible permutation
+"""
+def getPermRegex():
+    if featureSet == Perms.STOPPIES:
+        return "stop-|userID"
+
+"""
 Run the experiment for all of the features related to the proportion of stop words in the 
 users corpus. 
 """
@@ -53,9 +60,10 @@ def stoppies(myArgs):
     stoppyDF = loadDataset(myArgs.mini)
 
     stoppyDF = stoppyDF[list(stoppyDF.filter(regex="stop-|userID"))]
+    splitData = split(myDF=stoppyDF)
 
     if not myArgs.load:
-        xTrain, yTrain, _, _ = split(myDF=stoppyDF)
+        xTrain, yTrain, _, _ = splitData
 
         stopSVM = initSVM(xTrain, yTrain, fullSearch=True)
 
@@ -64,15 +72,44 @@ def stoppies(myArgs):
         stopSVM = fileIO.loadPickle("StopWordsSVM.pkl")
 
     pprint(stopSVM.cv_results_)
-    createResultsDF(stopSVM, stoppyDF, "StopWordsResults.csv")
+    createResultsDF(stopSVM, splitData, "StopWordsResults.csv")
     # test1Model(stopSVM, stoppyDF, featureSet.name + "SingleModelResults.csv")
+
+"""
+Run the experiment for all of the features related to vocabulary richness in the 
+users corpus. 
+"""
+def richies(myArgs):
+    richSVM = None
+    richDF = loadDataset(myArgs.mini)
+
+    richDF = richDF[list(richDF.filter(regex="lego|yule|userID"))]
+
+    pprint(richDF)
+    print(richDF.columns)
+
+    # Ensure that the train and test sets are distinct
+    splitData = split(myDF=richDF)
+
+    if not myArgs.load:
+        xTrain, yTrain, _, _ = splitData
+
+        # Training a new SVM model and saving it to a file
+        richSVM = initSVM(xTrain, yTrain, fullSearch=True)
+        fileIO.savePickle(richSVM, f"{featureSet.name.title()}WordsSVM.pkl")
+    else:
+        richSVM = fileIO.loadPickle(f"{featureSet.name.title()}WordsSVM.pkl")
+
+    pprint(richSVM.cv_results_)
+    createResultsDF(richSVM, splitData, f"{featureSet.name.title()}WordsSVM.csv")
+    # test1Model(richSVM, splitData, f"{featureSet.name.title()}SingleModelResults.csv")
 
 """
 Creates a DF pertaining to the effectiveness of a model, as determined by metrics.
 In particular the individual class accuracy and the equivalence class accuracy. 
 """
-def createResultsDF(myModel, dataDF, fileName):
-    resultsDF = testWrapper(myModel.cv_results_, splitData=split(myDF=dataDF),
+def createResultsDF(myModel, splitData, fileName):
+    resultsDF = testWrapper(myModel.cv_results_, splitData=splitData,
                             fileName=fileName)
 
     if not os.path.exists(savePath):
@@ -96,6 +133,9 @@ if __name__ == "__main__":
     myParser.add_argument("--stoppies", default=False, action="store_true",
                         help="Train the subset of features pertaining to stop words."
                             + "Default: False")
+    myParser.add_argument("--richness", default=False, action="store_true",
+                        help="Train the subset of features pertaining to vocabulary richness."
+                            + "Default: False")
     myParser.add_argument("--mini", "-m", default=False, action="store_true",
                         help="Whether a small subsection of the dataset will be used for training."
                             + "Default: False")
@@ -108,4 +148,10 @@ if __name__ == "__main__":
     if myArgs.stoppies:
         featureSet = Perms.STOPPIES
 
+        if myArgs.richness:
+            featureSet = Perms.STOP_RICH 
+
         stoppies(myArgs)
+    elif myArgs.richness:
+        featureSet = Perms.RICHNESS
+        richies(myArgs)
