@@ -69,28 +69,15 @@ def runPredictions(myDF, mini=False, splitData=None, fileName="", complete=True,
 
     loopIters = 0
     for _, model in myDF.iterrows(): 
-        if loopIters == 1 and single:
+        if single and loopIters == 1:
             break
 
         intermediateFile = fileName[:-4] + model["params"]["kernel"] + ".csv"
 
-        # Prediction files exist for each model
-        # Each file contains the predicted probabilities for each of the user classes
-        # Each record is the probabilities for each test instance
-        # Also contain predicted class and actual class,
-        # Things such as equiv class sizes can be determined from the probabilities
-
-        # Here we save each individual prediction file,
-        # Prediction file uses the non-experimental methods and saves all of the
-        # Predictions i
-
+        # Just saving dataframes as we go along so we don't lose anything
         preds.extend(predictTests(model, splitData, mini, fileName))
-
         pd.DataFrame(preds).to_csv(intermediateFile)
         
-        #This could probably be determined from outside the loop
-        #I mean the array of possible values for the kernel parameter
-        # kernelValues.append(model[])
         cleanupFiles.append(intermediateFile)
         
         loopIters += 1
@@ -108,8 +95,6 @@ Calculates the probabilities for each of the trained user classes for each
 test instance (either provided or generated automatically)
 """
 def predictTests(model, splitData, mini, fileName):
-    predResults = []
-
     print("\nCurrently calculating predictions against this model:")
     pprint(model)
 
@@ -124,10 +109,17 @@ def predictTests(model, splitData, mini, fileName):
         xTrain, yTrain, xTest, yTest = splitData
         myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
     
-    # Don't predict against the equiv classes here
-    # Instead just get the raw classification probabilities
-    # We'll use yTest to get the actual class obviously
-    # All of the trained user classes, just to associate their probabilities
+    return calcTestProbs(myModel, xTest, yTest)
+
+"""
+Calculates the probabilities of the entire provided test instance.
+
+Creates a list of dictionaries for each of the sampled test instances to 
+later be stored in a DF which can be used for further processing.
+Either way the results will be stored into a CSV for later use.
+"""
+def calcTestProbs(myModel, xTest, yTest):
+    predResults = []
 
     for i in np.arange(len(xTest)):
         predicty = defaultdict(lambda: None)
@@ -141,17 +133,14 @@ def predictTests(model, splitData, mini, fileName):
         
         predicty.update({f"User ID {userID}": prob for userID, prob in zip(userIDs, predProbs)})
 
-        pprint(dict(predicty))
-
-        pprint(xTest)
-        pprint(yTest)
-
         predicty["Actual Class"] = actualClass
         predicty["Predicted Class"] = predClass
         predicty["User Predicted"] = actualClass == predClass
 
-        predResults.append(predicty)
+        predicty.update({param: paramVals[0] for param, paramVals 
+            in myModel.get_params()["param_distributions"].items()})
 
+        predResults.append(predicty)
 
     return predResults
 
@@ -363,8 +352,8 @@ if __name__ == "__main__":
                         help="The file name to store the results as.")
     myParser.add_argument("--complete", default=True, action="store_false",
                         help="Flag to turn off using a complete-incremental approach")
-    myParser.add_argument("--saveProbs", default=True, action="store_false",
-                        help="Turn off the saving of probabilities when experimenting.")
+    myParser.add_argument("--runProbs", default=False, action="store_true",
+                        help="Generate the probabilities from scratch when experimenting.")
     myParser.add_argument("--probsOnly", default=False, action="store_true",
                         help="Only save the probabilities and don't run the experimentation.")
 
