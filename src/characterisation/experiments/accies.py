@@ -11,10 +11,10 @@ from pprint import pprint
 
 from matplotlib import pyplot as plt
 
-from characterisation.classibu import skippedSVM, svmPredict
+from characterisation.classibu import skippedSVM, svmPredict, rawSVMPredict
 from characterisation.classification.equiv import Equivs 
 from characterisation.classification.sklearnSVM import expPredict, initSVM 
-from characterisation.classification.sklearnHelper import split
+from characterisation.classification.sklearnHelper import split, filteredMap
 
 from helpers import fileIO
 
@@ -27,6 +27,13 @@ def testWrapper(cvResults, mini=False, splitData=None, fileName="", complete=Tru
 
     return runAccuracyTests(resultsDF, mini, splitData, fileName=fileName,
                             complete=complete, single=single)
+
+def probWrapper(cvResults, mini=False, splitData=None, fileName="", complete=True, single=False):
+    resultsDF = formatCVResults(cvResults)
+
+    return runPredictions(resultsDF, mini, splitData, fileName=fileName,
+                            complete=complete, single=single)
+
 
 """
 Formats the results for a previous Cross-Validation search over a distribution of 
@@ -52,6 +59,101 @@ def formatCVResults(cvResults):
 
     cvResults = pd.DataFrame(cvResults)
     return cvResults.sort_values("rank_test_score")
+
+"""
+I also need to save files based on the subset of features being used for training
+"""
+def runPredictions(myDF, mini=False, splitData=None, fileName="", complete=True, single=False):
+    preds = []
+    cleanupFiles = []
+
+    loopIters = 0
+    for _, model in myDF.iterrows(): 
+        if loopIters == 1 and single:
+            break
+
+        intermediateFile = fileName[:-4] + model["params"]["kernel"] + ".csv"
+
+        # Prediction files exist for each model
+        # Each file contains the predicted probabilities for each of the user classes
+        # Each record is the probabilities for each test instance
+        # Also contain predicted class and actual class,
+        # Things such as equiv class sizes can be determined from the probabilities
+
+        # Here we save each individual prediction file,
+        # Prediction file uses the non-experimental methods and saves all of the
+        # Predictions i
+
+        preds.extend(predictTests(model, splitData, mini, fileName))
+
+        pd.DataFrame(preds).to_csv(intermediateFile)
+        
+        #This could probably be determined from outside the loop
+        #I mean the array of possible values for the kernel parameter
+        # kernelValues.append(model[])
+        cleanupFiles.append(intermediateFile)
+        
+        loopIters += 1
+
+    for cleanFile in cleanupFiles:
+        os.remove(cleanFile)
+
+    preds = pd.DataFrame(preds)
+    preds.to_csv(fileName)
+
+    return pd.DataFrame(preds)
+
+"""
+Calculates the probabilities for each of the trained user classes for each 
+test instance (either provided or generated automatically)
+"""
+def predictTests(model, splitData, mini, fileName):
+    predResults = []
+
+    print("\nCurrently calculating predictions against this model:")
+    pprint(model)
+
+    myModel = None
+    xTest, yTest = None, None
+    paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
+    
+    if splitData is None:
+        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, mini=mini, searchNum=1,
+                                    returnTest=True, verbose=False)
+    else:
+        xTrain, yTrain, xTest, yTest = splitData
+        myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
+    
+    # Don't predict against the equiv classes here
+    # Instead just get the raw classification probabilities
+    # We'll use yTest to get the actual class obviously
+    # All of the trained user classes, just to associate their probabilities
+
+    for i in np.arange(len(xTest)):
+        predicty = defaultdict(lambda: None)
+        userIDs = list(filteredMap().keys())
+
+        testInput = xTest[i]
+        actualClass = yTest[i]
+        
+        predProbs = rawSVMPredict(myModel, testInput)
+        predClass = userIDs[np.argmax(predProbs)]
+        
+        predicty.update({f"User ID {userID}": prob for userID, prob in zip(userIDs, predProbs)})
+
+        pprint(dict(predicty))
+
+        pprint(xTest)
+        pprint(yTest)
+
+        predicty["Actual Class"] = actualClass
+        predicty["Predicted Class"] = predClass
+        predicty["User Predicted"] = actualClass == predClass
+
+        predResults.append(predicty)
+
+
+    return predResults
 
 """
 Runs tests against the accuracy of models
@@ -130,8 +232,7 @@ def testEquivs(myModel, xTest, yTest, modelParams=None, fileName=""):
     for equiv in Equivs:
         print(f"Testing the {equiv.name} equivalence class.")
         modelResults = defaultdict(lambda: {})
-        claccuracy, indAccuracy, equivClasses = expPredict(myModel, xTest, yTest, equivClass=equiv)
-
+        claccuracy, indAccuracy, equivClasses = expPredict(myModel, xTest, yTest, equivClass=equiv, returnProbs=True)
         #Loop over the equivalence class sizes I guess
         equivSizes = [len(equivClass) for equivClass in equivClasses]
         equivSizeCounter = Counter(equivSizes)
@@ -171,7 +272,7 @@ def incrementalEquivsTests(myModel, xTest, yTest, modelParams=None, fileName="")
                 end="\r")
         
         for equiv in Equivs:
-            result = svmPredict(myModel, xTest[i].reshape(1, -1), equiv)
+            result = svmPredict(myModel, xTest[i], equiv)
             modelDF = defaultdict(lambda: {})
             
             modelDF["Equiv Class"] = equiv.name
@@ -229,15 +330,19 @@ def main(myArgs):
     else:
         cvResults = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
 
-    #Stores the results for the accuracy tests
-    accResults = testWrapper(cvResults, myArgs.mini, 
-                                fileName=myArgs.fileName, complete=myArgs.complete)
-
-    #Saving the results of the accuracy tests to a CSV
-    if myArgs.full:
-        accResults.to_csv(f"classySVM_FullSearchAccResults.csv")
+    if myArgs.probsOnly:
+        accResults = probWrapper(cvResults, myArgs.mini, 
+                                    fileName=myArgs.fileName, complete=myArgs.complete, single=True)
     else:
-        accResults.to_csv(f"classySVM_{myArgs.searchNum}SearchAccResults.csv")
+        #Stores the results for the accuracy tests
+        accResults = testWrapper(cvResults, myArgs.mini, 
+                                    fileName=myArgs.fileName, complete=myArgs.complete)
+
+        #Saving the results of the accuracy tests to a CSV
+        if myArgs.full:
+            accResults.to_csv(f"classySVM_FullSearchAccResults.csv")
+        else:
+            accResults.to_csv(f"classySVM_{myArgs.searchNum}SearchAccResults.csv")
 
 
 if __name__ == "__main__":
@@ -258,6 +363,10 @@ if __name__ == "__main__":
                         help="The file name to store the results as.")
     myParser.add_argument("--complete", default=True, action="store_false",
                         help="Flag to turn off using a complete-incremental approach")
+    myParser.add_argument("--saveProbs", default=True, action="store_false",
+                        help="Turn off the saving of probabilities when experimenting.")
+    myParser.add_argument("--probsOnly", default=False, action="store_true",
+                        help="Only save the probabilities and don't run the experimentation.")
 
     myArgs = myParser.parse_args()
 

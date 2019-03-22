@@ -14,7 +14,7 @@ from pprint import pprint
 
 from characterisation.helpers.stack import dataPath, serverfault, worldbuilding
 
-from characterisation.classification.sklearnSVM import initSVM, expPredict, predict
+from characterisation.classification.sklearnSVM import initSVM
 from characterisation.classification.sklearnHelper import split
 from characterisation.classification.equiv import Equivs
 
@@ -23,7 +23,7 @@ from characterisation.experiments.accies import testWrapper
 from helpers import fileIO
 
 #Store every possible permutation on grouped features as possible
-Perms = Enum("Perms", "STOPPIES RICHNESS AVERAGES STOP_RICH STOP_AVG RICH_AVG")
+Perms = Enum("Perms", "STOPPIES RICHNESS AVERAGES STOP_RICH STOP_AVG RICH_AVG STOP_RICH_AVG")
 
 savePath = os.path.join(dataPath, "experiments")
 

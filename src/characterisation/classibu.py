@@ -88,7 +88,10 @@ Passing in a model is not an ideal solution. I should have my own SVM class whic
 method to specify the equivalence class method and input to predict.
 """
 def svmPredict(model, xInput, equivClass=Equivs.JUMP):
-    return svm.predict(model, xInput, equivClass)
+    return svm.predict(model, xInput.reshape(1, -1), equivClass)
+
+def rawSVMPredict(model, xInput):
+    return svm.predictProbs(model, xInput.reshape(1, -1))
 
 """
 This is the main file for classification of course, and this is, well, the main method.

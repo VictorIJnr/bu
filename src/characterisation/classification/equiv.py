@@ -5,7 +5,7 @@ from collections import defaultdict
 from enum import Enum
 from pprint import pprint
 
-from .sklearnHelper import filteredMap
+from characterisation.classification.sklearnHelper import filteredMap
 
 Equivs = Enum("Equivs", "JUMP SCORE_DIST PERCENTILES")
 
@@ -14,14 +14,13 @@ Jump point equivalence class method.
 Checks if a userID (class) is within a subset of classes 
 based on the biggest difference of probabilities between classes
 
-dataset - the dataset which predictions are tested on 
+dataset - the dataset which was trained on 
           currently a string but should be changed to an enum sometime
 """
 def jumpy(dataset, classPreds, filteredIDs=None):
     filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
 
     userMap = makeUserMap(dataset, classPreds)
-    predictedClass = keyFromValue(userMap, np.amax(classPreds))
 
     sortedProbs = np.sort(classPreds)[::-1]
     diffs = np.absolute(np.diff(sortedProbs))

@@ -24,6 +24,7 @@ def pullTopX(num=5):
 
 """
 Trains a SVM for user classification
+Performs hyper-parameter optimisation in the process
 """
 def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSearch=False, verbose=True):
     print(f"{len(np.unique(trainY))} different training classes\n")
@@ -65,20 +66,35 @@ def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSe
     return classy
 
 """
+Predicts the user directly from the SVM input. Does not use equiv classes.
+Solely returns the probabilities for each of the trained user classes
+"""
+def predictProbs(model, xInput):
+    return model.predict_proba(xInput)[0]
+
+"""
 Predicts the equivalence class of users, with the provided algorithm given a model
 
 It's easier to use this method by passing a model instead of expecting to pass
 very specific data.
 """
-def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding"):
-    probs = model.predict_proba(xInput)[0]
+def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding",
+                returnProbs=False):
+    probs = predictProbs(model, xInput)
+
+    results = None
 
     if equivClass == Equivs.JUMP:
-        return jumpy(dataset, probs)
+        results = jumpy(dataset, probs)
     elif equivClass == Equivs.SCORE_DIST:
-        return scoreDistri(dataset, probs)
+        results = scoreDistri(dataset, probs)
     elif equivClass == Equivs.PERCENTILES:
-        return userCentiles(dataset, probs)
+        results = userCentiles(dataset, probs)
+
+    if returnProbs:
+        return results, probs
+    else:
+        return results
 
 """
 Experimental method to predict the equivalence class of users
@@ -86,15 +102,23 @@ Experimental method to predict the equivalence class of users
 Unlike the non-experimental version, this uses the experimental equiv class
 methods to return the accuracies instead of the predicted class.
 """
-def expPredict(model, xTest, yTest, equivClass=Equivs.JUMP, dataset="worldbuilding", individual=False):
+def expPredict(model, xTest, yTest, equivClass=Equivs.JUMP, dataset="worldbuilding", individual=False,
+                returnProbs=False):
     probs = model.predict_proba(xTest)
 
+    results = None
+
     if equivClass == Equivs.JUMP:
-        return jumpyExperimental(probs, yTest, dataset=dataset, individual=individual)
+        results = jumpyExperimental(probs, yTest, dataset=dataset, individual=individual)
     elif equivClass == Equivs.SCORE_DIST:
-        return scoreDistriExperimental(probs, yTest, dataset=dataset, individual=individual)
+        results = scoreDistriExperimental(probs, yTest, dataset=dataset, individual=individual)
     elif equivClass == Equivs.PERCENTILES:
-        return userCentilesExperimental(probs, yTest, dataset=dataset, individual=individual)
+        results = userCentilesExperimental(probs, yTest, dataset=dataset, individual=individual)
+
+    if returnProbs:
+        return results, probs
+    else:
+        return results
 
 """
 Loads a previously trained SVM model
@@ -109,15 +133,15 @@ def testEquiv(loadModel=False):
     trainX, trainY, testX, testY = pullData()
     classy = initSVM(trainX, trainY, loadModel=loadModel)
 
-    predictProbs = classy.predict_proba(testX)
+    probs = classy.predict_proba(testX)
     predictions = classy.predict(testX)
 
     mapping = filteredMap()
 
-    scoreDistriExperimental(predictProbs, testY, dataset="worldbuilding")
+    scoreDistriExperimental(probs, testY, dataset="worldbuilding")
     
-    jumpyExperimental(predictProbs, testY, dataset="worldbuilding")
-    userCentilesExperimental(predictProbs, testY, dataset="worldbuilding")
+    jumpyExperimental(probs, testY, dataset="worldbuilding")
+    userCentilesExperimental(probs, testY, dataset="worldbuilding")
 
 if __name__ == "__main__":
     myParser = ArgumentParser()

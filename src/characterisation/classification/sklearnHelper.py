@@ -200,6 +200,7 @@ def filteredMap(df=None, dataset=None, threshold=5):
     if df is None:
         df = __loadData()
     if dataset is not None:
+        # I don't know what I was thinking here, I don't know why the dataset is being used
         pass
 
     threshold += 1
