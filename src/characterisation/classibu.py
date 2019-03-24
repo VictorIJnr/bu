@@ -94,6 +94,12 @@ def rawSVMPredict(model, xInput):
     return svm.predictProbs(model, xInput.reshape(1, -1))
 
 """
+Predicts the user class and the user through pre-calculated user probabilities
+"""
+def svmPredictProbs(probs=None, equivClass=Equivs.JUMP):
+    return svm.predict(None, None, equivClass=equivClass, probs=probs)
+
+"""
 This is the main file for classification of course, and this is, well, the main method.
 Duh.
 

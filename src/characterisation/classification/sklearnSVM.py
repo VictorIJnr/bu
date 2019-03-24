@@ -79,8 +79,8 @@ It's easier to use this method by passing a model instead of expecting to pass
 very specific data.
 """
 def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding",
-                returnProbs=False):
-    probs = predictProbs(model, xInput)
+                returnProbs=False, probs=None):
+    probs = predictProbs(model, xInput) if probs is None else probs
 
     results = None
 

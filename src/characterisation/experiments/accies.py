@@ -1,9 +1,13 @@
 #Experiment file testing against the accuracies of different models 
 import os
+import re
 
+# pylint: disable=import-error
 import seaborn as sns
 import pandas as pd
-import numpy as np
+import numpy as np 
+
+import characterisation.classibu as classibu
 
 from argparse import ArgumentParser
 from collections import Counter, defaultdict
@@ -16,6 +20,7 @@ from characterisation.classification.equiv import Equivs
 from characterisation.classification.sklearnSVM import expPredict, initSVM 
 from characterisation.classification.sklearnHelper import split, filteredMap
 
+# pylint: disable=no-name-in-module
 from helpers import fileIO
 
 """
@@ -28,7 +33,14 @@ def testWrapper(cvResults, mini=False, splitData=None, fileName="", complete=Tru
     return runAccuracyTests(resultsDF, mini, splitData, fileName=fileName,
                             complete=complete, single=single)
 
-def probWrapper(cvResults, mini=False, splitData=None, fileName="", complete=True, single=False):
+"""
+Variation in Programming for the testWrapper. Kinda obvious
+"""
+def testWrapperVIP(probaFile="ExpProbabilities.csv", fileName="AcciesResults.csv"):
+    return runAccuracyTestsVIP(probaFile=probaFile, fileName=fileName)
+
+def probWrapper(cvResults, mini=False, splitData=None, fileName="ExpProbabilities.csv",
+                complete=True, single=False):
     resultsDF = formatCVResults(cvResults)
 
     return runPredictions(resultsDF, mini, splitData, fileName=fileName,
@@ -88,7 +100,7 @@ def runPredictions(myDF, mini=False, splitData=None, fileName="", complete=True,
     preds = pd.DataFrame(preds)
     preds.to_csv(fileName)
 
-    return pd.DataFrame(preds)
+    return preds
 
 """
 Calculates the probabilities for each of the trained user classes for each 
@@ -181,6 +193,61 @@ def runAccuracyTests(myDF, mini=False, splitData=None, fileName="", complete=Tru
     accResults.to_csv(fileName)
 
     return pd.DataFrame(accResults).fillna(0)
+
+"""
+Variation in Programming to accomodate the accuracy files
+"""
+def runAccuracyTestsVIP(probaFile="ExpProbabilities.csv", fileName=""):
+    probaDF = pd.read_csv(probaFile)
+    probaDF.drop(list(probaDF.filter(regex="Unnamed*")), axis=1, inplace=True)
+
+    results = testEquivsVIP(probaDF)
+    results = pd.DataFrame(results)
+
+    results.to_csv(fileName)
+
+"""
+Variation in Programming for the incrementalTestEquivs method to allow for
+evaluation using the generated probabilities CSV
+
+The incremental equivs method should become the de facto method and I'll deprecate the 
+other one sometime soon.
+"""
+def testEquivsVIP(probaDF):
+    equivResults = []
+
+    newProbs, probaDF = formatProbs(probaDF)
+    numRows = len(probaDF.index)
+
+    for i in np.arange(numRows):
+        print(f"Testing index {i + 1} of "
+               + f"{numRows} - {((i + 1)/ numRows) * 100:.3f}% done.",
+                end="\r")
+        
+        # Even though I'm using already predicted probabilities, I still need each Equiv class
+        for equiv in Equivs:
+            
+            # Returns the equivalence class for the provided list of probabilities
+            result = classibu.svmPredictProbs(newProbs[i], equiv)
+            modelDF = defaultdict(lambda: {})
+
+            actualClass = probaDF.iloc[i]["Actual Class"]
+
+            modelDF["Equiv Class"] = equiv.name
+            modelDF["Actual Class"] = actualClass
+            modelDF["Class Size"] = len(result)
+            modelDF["Correct Class Predicted"] = actualClass in result
+            modelDF["Exact User Predicted"] = actualClass == result[0]
+            modelDF["Largest Possible Class Size"] = len(probaDF["Actual Class"])
+            modelDF["Predicted Class"] = result[0]
+
+            modelParams = probaDF.drop(list(probaDF.filter(regex=r"Class|\d|User")), axis=1)
+
+            for paramName, paramValue in modelParams.items():
+                modelDF[paramName] = paramValue[1]
+
+            equivResults.append(dict(modelDF))
+    return equivResults
 
 """
 Tests a single model instance from the CV Results
@@ -282,6 +349,38 @@ def incrementalEquivsTests(myModel, xTest, yTest, modelParams=None, fileName="")
     
     return equivResults
 
+"""
+Formats the probability DataFrame to allow for use for predictions
+
+Ensures that the probabilities are provided as a list.
+This list will be in ascending order of userIDs.
+
+This should return a list of a list of probabilities, the super list being in order of
+the predicted test instances, which it already is.
+"""
+def formatProbs(probaDF):
+    probs = []
+
+    probaDF = probaDF.rename(columns=lambda x: re.sub("User ID ", "", x))
+
+    # Filter the DF to only get all the probabilities
+    filtCols = list(probaDF.filter(regex=r"\d").columns)
+    userCols = pd.concat([probaDF.pop(myCol) for myCol in filtCols], 1)
+    
+    userCols = userCols.rename(columns=lambda x: int(x))
+    userCols = userCols.reindex(np.sort(userCols.columns), axis=1)
+
+    # Store each row of probabilities into the super list of probabilities
+    for _, probSet in userCols.iterrows():
+        probs.append(list(probSet))
+
+    # Forming the new reformatted DF
+    for myCol in userCols.columns:
+        probaDF[myCol] = userCols.pop(myCol).values
+
+    # Return both the list of probabilities and the formatted df
+    return probs, probaDF
+
 def plotEquivs(myArgs):
     # Set theme
     sns.set_style('whitegrid')
@@ -320,8 +419,9 @@ def main(myArgs):
         cvResults = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
 
     if myArgs.probsOnly:
-        accResults = probWrapper(cvResults, myArgs.mini, 
-                                    fileName=myArgs.fileName, complete=myArgs.complete, single=True)
+        accResults = probWrapper(cvResults, myArgs.mini, complete=myArgs.complete, single=True)
+    elif myArgs.debug:
+        accResults = testWrapperVIP()
     else:
         #Stores the results for the accuracy tests
         accResults = testWrapper(cvResults, myArgs.mini, 
@@ -356,6 +456,8 @@ if __name__ == "__main__":
                         help="Generate the probabilities from scratch when experimenting.")
     myParser.add_argument("--probsOnly", default=False, action="store_true",
                         help="Only save the probabilities and don't run the experimentation.")
+    myParser.add_argument("--debug", default=False, action="store_true",
+                        help="Legit. What do you think this does?")
 
     myArgs = myParser.parse_args()
 
