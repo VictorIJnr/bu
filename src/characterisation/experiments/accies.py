@@ -27,25 +27,16 @@ from helpers import fileIO
 Wraps the functionality of performing accuracy tests into one method dependant
 on having Cross-Validation results.
 """
-def testWrapper(cvResults, mini=False, splitData=None, fileName="", complete=True, single=False):
-    resultsDF = formatCVResults(cvResults)
-
-    return runAccuracyTests(resultsDF, mini, splitData, fileName=fileName,
-                            complete=complete, single=single)
+def testWrapper(probaFile="ExpProbabilities.csv", fileName="AcciesResults.csv"):
+    return runAccuracyTests(probaFile=probaFile, fileName=fileName)
 
 """
-Variation in Programming for the testWrapper. Kinda obvious
+Wraps the functionality for generating the CSV for the probability distribution of users.
 """
-def testWrapperVIP(probaFile="ExpProbabilities.csv", fileName="AcciesResults.csv"):
-    return runAccuracyTestsVIP(probaFile=probaFile, fileName=fileName)
-
-def probWrapper(cvResults, mini=False, splitData=None, fileName="ExpProbabilities.csv",
-                complete=True, single=False):
+def probWrapper(cvResults, mini=False, splitData=None, fileName="ExpProbabilities.csv", single=False):
     resultsDF = formatCVResults(cvResults)
 
-    return runPredictions(resultsDF, mini, splitData, fileName=fileName,
-                            complete=complete, single=single)
-
+    return runPredictions(resultsDF, mini, splitData, fileName=fileName, single=single)
 
 """
 Formats the results for a previous Cross-Validation search over a distribution of 
@@ -75,7 +66,7 @@ def formatCVResults(cvResults):
 """
 I also need to save files based on the subset of features being used for training
 """
-def runPredictions(myDF, mini=False, splitData=None, fileName="", complete=True, single=False):
+def runPredictions(myDF, mini=False, splitData=None, fileName="", single=False):
     preds = []
     cleanupFiles = []
 
@@ -162,58 +153,25 @@ Runs tests against the accuracy of models
 @param single indicates whether to test only the best performing model,
     determined by the Cross-Validation
 """
-def runAccuracyTests(myDF, mini=False, splitData=None, fileName="", complete=True, single=False):
-    accResults = []
-    # kernelValues = []
-    cleanupFiles = []
-
-    loopIters = 0
-    for _, model in myDF.iterrows(): 
-        if loopIters == 1 and single:
-            break
-
-        intermediateFile = fileName[:-4] + model["params"]["kernel"] + ".csv"
-
-        accResults.extend(modelAccTest(model, mini=mini, splitData=splitData, 
-                                        fileName=fileName, complete=complete))
-
-        pd.DataFrame(accResults).fillna(0).to_csv(intermediateFile)
-        
-        #This could probably be determined from outside the loop
-        #I mean the array of possible values for the kernel parameter
-        # kernelValues.append(model[])
-        cleanupFiles.append(intermediateFile)
-        
-        loopIters += 1
-
-    for file in cleanupFiles:
-        os.remove(file)
-
-    accResults = pd.DataFrame(accResults).fillna(0)
-    accResults.to_csv(fileName)
-
-    return pd.DataFrame(accResults).fillna(0)
-
-"""
-Variation in Programming to accomodate the accuracy files
-"""
-def runAccuracyTestsVIP(probaFile="ExpProbabilities.csv", fileName=""):
+def runAccuracyTests(probaFile="ExpProbabilities.csv", fileName=""):
     probaDF = pd.read_csv(probaFile)
     probaDF.drop(list(probaDF.filter(regex="Unnamed*")), axis=1, inplace=True)
 
-    results = testEquivsVIP(probaDF)
+    results = testEquivs(probaDF)
     results = pd.DataFrame(results)
 
     results.to_csv(fileName)
 
+    return results
+
 """
-Variation in Programming for the incrementalTestEquivs method to allow for
-evaluation using the generated probabilities CSV
+Testing against all of the different equivalence classes
+Allows for evaluation using the generated probabilities CSV
 
 The incremental equivs method should become the de facto method and I'll deprecate the 
 other one sometime soon.
 """
-def testEquivsVIP(probaDF):
+def testEquivs(probaDF):
     equivResults = []
 
     newProbs, probaDF = formatProbs(probaDF)
@@ -247,106 +205,6 @@ def testEquivsVIP(probaDF):
                 modelDF[paramName] = paramValue[1]
 
             equivResults.append(dict(modelDF))
-    return equivResults
-
-"""
-Tests a single model instance from the CV Results
-"""
-def modelAccTest(model, mini=False, splitData=None, fileName="", complete=True):
-    accResults = []
-
-    print("\nCurrently evaluating this model:")
-    pprint(model)
-
-    myModel = None
-    xTest, yTest = None, None
-    paramDist = {paramName: [paramValue] for paramName, paramValue in model["params"].items()}
-
-    if splitData is None:
-        myModel, xTest, yTest = skippedSVM(paramDist=paramDist, mini=mini, searchNum=1,
-                                    returnTest=True, verbose=False)
-    else:
-        xTrain, yTrain, xTest, yTest = splitData
-        myModel = initSVM(xTrain, yTrain, paramDist=paramDist, fullSearch=True)
-    
-    if complete:
-        accResults.extend(incrementalEquivsTests(myModel, xTest, yTest, 
-                            model["params"], fileName=fileName))
-    else:
-        accResults.extend(testEquivs(myModel, xTest, yTest, 
-                            model["params"], fileName=fileName))
-
-    pd.DataFrame(accResults).to_csv(fileName)
-    return accResults
-
-"""
-Testing against all of the different equivalence classes
-"""
-def testEquivs(myModel, xTest, yTest, modelParams=None, fileName=""):
-    equivResults = []
-
-    for equiv in Equivs:
-        print(f"Testing the {equiv.name} equivalence class.")
-        modelResults = defaultdict(lambda: {})
-        claccuracy, indAccuracy, equivClasses = expPredict(myModel, xTest, yTest, equivClass=equiv, returnProbs=True)
-        #Loop over the equivalence class sizes I guess
-        equivSizes = [len(equivClass) for equivClass in equivClasses]
-        equivSizeCounter = Counter(equivSizes)
-
-        modelResults["Equivalence Method"] = equiv.name
-        modelResults["User Accuracy"] = indAccuracy
-        modelResults["Class Accuracy"] = claccuracy
-        modelResults["Min Class Size"] = np.amin(equivSizes)
-        modelResults["Max Class Size"] = np.amax(equivSizes)
-        modelResults["Mean Class Size"] = np.mean(equivSizes)
-        modelResults["Largest Possible Class Size"] = len(np.unique(yTest))
-
-        for i in np.arange(1, np.amax(equivSizes) + 1):
-            modelResults[f"Class Size {i} Count"] = equivSizeCounter[i]
-
-        if modelParams is not None:
-            for paramName, paramValue in modelParams.items():
-                modelResults[paramName] = paramValue
-
-        equivResults.append(dict(modelResults))
-
-        pd.DataFrame(equivResults).to_csv(fileName)
-    
-    return equivResults
-
-"""
-Runs all of the accuracy tests incrementally such that all of the required CSVs are generated 
-line-by-line,
-Also synonymous to a "complete" CSV generation, checking against individual test classes
-"""
-def incrementalEquivsTests(myModel, xTest, yTest, modelParams=None, fileName=""):
-    equivResults = []
-
-    for i in np.arange(xTest.shape[0]):
-        print(f"Testing index {i + 1} of "
-               + f"{xTest.shape[0]} - {((i + 1)/ xTest.shape[0]) * 100:.3f}% done.",
-                end="\r")
-        
-        for equiv in Equivs:
-            result = svmPredict(myModel, xTest[i], equiv)
-            modelDF = defaultdict(lambda: {})
-            
-            modelDF["Equiv Class"] = equiv.name
-            modelDF["Actual Class"] = yTest[i]
-            modelDF["Class Size"] = len(result)
-            modelDF["Correct Class Predicted"] = yTest[i] in result
-            modelDF["Exact User Predicted"] = yTest[i] == result[0]
-            modelDF["Largest Possible Class Size"] = len(np.unique(yTest))
-            modelDF["Predicted Class"] = result[0]
-
-            if modelParams is not None:
-                for paramName, paramValue in modelParams.items():
-                    modelDF[paramName] = paramValue
-
-            equivResults.append(dict(modelDF))
-
-            pd.DataFrame(equivResults).to_csv(fileName)
-    
     return equivResults
 
 """
@@ -419,13 +277,10 @@ def main(myArgs):
         cvResults = fileIO.loadPickle(f"classySVM_{myArgs.searchNum}Searches.pkl").cv_results_
 
     if myArgs.probsOnly:
-        accResults = probWrapper(cvResults, myArgs.mini, complete=myArgs.complete, single=True)
-    elif myArgs.debug:
-        accResults = testWrapperVIP()
+        accResults = probWrapper(cvResults, myArgs.mini, single=True)
     else:
         #Stores the results for the accuracy tests
-        accResults = testWrapper(cvResults, myArgs.mini, 
-                                    fileName=myArgs.fileName, complete=myArgs.complete)
+        accResults = testWrapper(fileName=myArgs.fileName)
 
         #Saving the results of the accuracy tests to a CSV
         if myArgs.full:

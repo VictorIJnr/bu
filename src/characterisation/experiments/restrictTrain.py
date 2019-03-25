@@ -18,7 +18,7 @@ from characterisation.classification.sklearnSVM import initSVM
 from characterisation.classification.sklearnHelper import split
 from characterisation.classification.equiv import Equivs
 
-from characterisation.experiments.accies import testWrapper
+from characterisation.experiments.accies import probWrapper, testWrapper
 
 from helpers import fileIO
 
@@ -45,6 +45,28 @@ def loadDataset(mini):
         return pd.read_csv(os.path.join(dataPath, worldbuilding, "RestrictedPostsExtracted.csv"))
 
 """
+Just setting a global to determine which subset of features to be used for training
+"""
+def determineFeatureSet(myArgs):
+    global featureSet
+
+    if myArgs.stoppies:
+        featureSet = Perms.STOPPIES
+        if myArgs.richness:
+            featureSet = Perms.STOP_RICH 
+            if myArgs.averages:
+                featureSet = Perms.STOP_RICH_AVG 
+        if myArgs.averages:
+            featureSet = Perms.STOP_AVG 
+    elif myArgs.richness:
+        featureSet = Perms.RICHNESS
+        if myArgs.averages:
+            featureSet = Perms.RICH_AVG 
+    elif myArgs.averages:
+        featureSet = Perms.AVERAGES
+
+
+"""
 Returns the corresponding regex for the features for each possible permutation
 """
 def getPermRegex():
@@ -68,27 +90,28 @@ def getPermRegex():
         return f"{stoppiesRegex}|{richnessRegex}|{averageRegex}"
 
 """
-Runs the restrictive training experiment for a determined feature set on a user's corpus.
+Wrapper for the restrictTrain method.
+Allows restrictTrain() to be called within the code to generate probability files
+for each possible permutation of feature set groups
 """
-def restrictTrain(myArgs):
+def restrictWrapper(myArgs):
     determineFeatureSet(myArgs)
 
     print(featureSet)
+    restrictTrain(myArgs.load, myArgs.mini)
 
+"""
+Runs the restrictive training experiment for a determined feature set on a user's corpus.
+"""
+def restrictTrain(load=False, mini=False):
     mySVM = None
-    myDF = loadDataset(myArgs.mini)
-
+    myDF = loadDataset(mini)
     myDF = myDF[list(myDF.filter(regex=getPermRegex()))]
-
-    pprint(myDF.columns)
     
     # Ensure that the train and test sets are distinct
     splitData = split(myDF=myDF)
 
-    pprint(splitData[0])
-
-
-    if not myArgs.load:
+    if not load:
         xTrain, yTrain, _, _ = splitData
 
         # Training a new SVM model and saving it to a file
@@ -97,32 +120,21 @@ def restrictTrain(myArgs):
     else:
         mySVM = fileIO.loadPickle(f"{featureSet.name.title()}WordsSVM.pkl")
 
-    createResultsDF(mySVM, splitData, f"{featureSet.name.title()}WordsSVM.csv")
+    createProbsCSV(mySVM, splitData, f"{featureSet.name.title()}WordsSVM.csv")
 
-def determineFeatureSet(myArgs):
-    global featureSet
-
-    if myArgs.stoppies:
-        featureSet = Perms.STOPPIES
-        if myArgs.richness:
-            featureSet = Perms.STOP_RICH 
-            if myArgs.averages:
-                featureSet = Perms.STOP_RICH_AVG 
-        if myArgs.averages:
-            featureSet = Perms.STOP_AVG 
-    elif myArgs.richness:
-        featureSet = Perms.RICHNESS
-        if myArgs.averages:
-            featureSet = Perms.RICH_AVG 
-    elif myArgs.averages:
-        featureSet = Perms.AVERAGES
+"""
+Runs the accuracy experiments for the calculated probabilities
+for each set of feature set permutations
+"""
+def runAcciesExp():
+    pass
 
 """
 Creates a DF pertaining to the effectiveness of a model, as determined by metrics.
 In particular the individual class accuracy and the equivalence class accuracy. 
 """
-def createResultsDF(myModel, splitData, fileName):
-    resultsDF = testWrapper(myModel.cv_results_, splitData=splitData,
+def createProbsCSV(myModel, splitData, fileName):
+    resultsDF = probWrapper(myModel.cv_results_, splitData=splitData,
                             fileName=fileName)
 
     if not os.path.exists(savePath):
@@ -130,6 +142,30 @@ def createResultsDF(myModel, splitData, fileName):
 
     # pprint(resultsDF)
     resultsDF.to_csv(os.path.join(savePath, fileName))
+
+def createAcciesCSV():
+    pass
+
+"""
+Creates the CSV for predicted probabilities for each of the different feature set permutations.
+Accompanies the autoRestrict() method to complete the experiment.
+"""
+def autoProbsCSV(myArgs):
+    global featureSet
+
+    for perm in Perms:
+        featureSet = perm
+        restrictTrain(myArgs.load, myArgs.mini)
+
+"""
+Run the restriction experiment on all of the generated probability files.
+"""
+def autoRestrict():
+    global featureSet
+
+    for perm in Perms:
+        featureSet = perm
+        restrictTrain(myArgs.load, myArgs.mini)
 
 """
 Runs the experiment against only the best model found from the Cross-Validation search.
@@ -166,4 +202,4 @@ if __name__ == "__main__":
 
     determineFeatureSet(myArgs)
 
-    restrictTrain(myArgs)
+    restrictWrapper(myArgs)
