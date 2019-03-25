@@ -14,6 +14,7 @@ from collections import Counter, defaultdict
 from pprint import pprint
 
 from matplotlib import pyplot as plt
+from sklearn.model_selection import RandomizedSearchCV
 
 from characterisation.classibu import skippedSVM, svmPredict, rawSVMPredict
 from characterisation.classification.equiv import Equivs 
@@ -26,6 +27,9 @@ from helpers import fileIO
 """
 Wraps the functionality of performing accuracy tests into one method dependant
 on having Cross-Validation results.
+
+:param probaFile the name of the file to retrieve calculated probabilities
+:param fileName the name of the file to save the dataframe containing the results
 """
 def testWrapper(probaFile="ExpProbabilities.csv", fileName="AcciesResults.csv"):
     return runAccuracyTests(probaFile=probaFile, fileName=fileName)
@@ -64,7 +68,7 @@ def formatCVResults(cvResults):
     return cvResults.sort_values("rank_test_score")
 
 """
-I also need to save files based on the subset of features being used for training
+Runs predictions for the provided dataset against a series of provided models.
 """
 def runPredictions(myDF, mini=False, splitData=None, fileName="", single=False):
     preds = []
@@ -140,8 +144,18 @@ def calcTestProbs(myModel, xTest, yTest):
         predicty["Predicted Class"] = predClass
         predicty["User Predicted"] = actualClass == predClass
 
+        # print(f"LOOK AT ALL THESE KEYS {myModel.get_params()['cv']}")
+        # print(f"LOOK AT ALL THESE KEYS {type(myModel)}")
+        # print(f"LOOK AT ALL THESE KEYS {myModel.get_params().keys()}")
+        # print(f"LOOK AT ALL THESE KEYS {myModel.get_params()['param_grid']}")
+        # print(f"LOOK AT ALL THESE KEYS {myModel.get_params()['estimator']}")
+
+        modelParams = myModel.get_params()["param_distributions"] \
+            if isinstance(myModel, RandomizedSearchCV) \
+            else myModel.get_params()["param_grid"]
+
         predicty.update({param: paramVals[0] for param, paramVals 
-            in myModel.get_params()["param_distributions"].items()})
+            in modelParams.items()})
 
         predResults.append(predicty)
 
