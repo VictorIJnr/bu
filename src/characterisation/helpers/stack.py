@@ -107,7 +107,7 @@ def main():
     initNumPosts = postDF.shape[0]
     print(f"Initial number of Posts:\t{initNumPosts}")
 
-    postDF, allUsers, initNumUsers = restrict(postDF)
+    postDF, allUsers, initNumUsers = restrict(postDF, commentDF)
     print(f"Number of Users:\t{len(allUsers)}")
     print(f"Filtered Posts size:\t{postDF.shape[0]}")
 
@@ -148,11 +148,20 @@ def execRestrict(myDataset, limit=rowLimit):
 
     print(f"Initial number of Posts:\t{allPosts.shape[0]}")
 
-    newPosts, _, _ = restrict(allPosts, allComments)
+    #! Uncomment this when I'm done getting output for the report
+    #// newPosts, _, _ = restrict(allPosts, allComments)
+
+    #! The following line is just for my report
+    newPosts, userDict, initNumUsers = restrict(allPosts, allComments)    
 
     newPosts = newPosts[:limit] if limit is not None else newPosts
     savePath = "miniRestrictedPosts.csv" if limit is not None else "RestrictedPosts.csv"
     newPosts.to_csv(os.path.join(dataPath, dataset, savePath))
+
+    #! The following output was just for me to write my report
+    print(f"Initial number of users:\t{initNumUsers}")
+    print(f"Final number of Posts:\t{newPosts.shape[0]}")
+    print(f"Final number of users:\t{len(userDict)}")
 
 if __name__ == "__main__":
     main()

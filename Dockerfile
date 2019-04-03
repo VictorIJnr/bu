@@ -1,4 +1,4 @@
-FROM python:3.6
+FROM python:3.6.8
 
 WORKDIR /bu
 
@@ -18,11 +18,8 @@ RUN python -m spacy download en
 #I just really wanted less
 RUN apt-get update
 RUN apt-get install less
+RUN cd src
 
 #This is the "exec" form, it's preferred but I like the "shell form" (the one I use) more
 # ENTRYPOINT ["bash"]
 ENTRYPOINT bash
-
-#Just yeet this into the command line to run the container
-#docker container run -it --name bu --mount src=distbu,dst=/bu/ --mount src=$(pwd)/src,type=bind,dst=/bu/src victorijnr/bu:neg-1.0
-#That's a long boi, I know, I'm learning bash to make a script to run this for me

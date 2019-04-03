@@ -3,6 +3,8 @@ import os
 import numpy as np
 import pandas as pd
 
+import characterisation.classification.equiv as equiv
+
 from collections import defaultdict
 from pprint import pprint
 from time import time
@@ -107,7 +109,7 @@ def split(myDataset="worldbuilding", mini=True, folds=5, myDF=None):
     elif myDataset == "serverfault":
         dataset = serverfault
 
-    inputData = filterUsers(df=loadData(myDataset, mini) if myDF is None else myDF)
+    inputData = filterUsers(df=loadData(dataset, mini) if myDF is None else myDF)
 
     userIDs = inputData.pop("userID").values.astype(np.uint32)
     inputData = inputData.values
@@ -119,6 +121,9 @@ def split(myDataset="worldbuilding", mini=True, folds=5, myDF=None):
 
     return trainData, trainIDs, testData, testIDs
 
+"""
+Runs a hyper-parameter search for a given model class
+"""
 def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=True, cv=5):
     model = RandomizedSearchCV(searchModel, param_distributions=paramDist, n_iter=searchNum, 
                                 cv=cv, verbose=2 if verbose else 0, return_train_score=True,
@@ -134,7 +139,6 @@ def hyperSearch(searchModel, paramDist, trainX, trainY, searchNum=20, verbose=Tr
         report(model.cv_results_)
 
     return model
-
 
 """
 Runs an exhaustive search through all the paramaters specified in the parameter distribution
@@ -237,3 +241,58 @@ def uniqueUsers():
         retUnique[unique[0][i]] = unique[1][i]
     
     return unique[0].astype(np.uint32)
+
+"""
+Predicts the user directly from the SVM input. Does not use equiv classes.
+Solely returns the probabilities for each of the trained user classes
+"""
+def predictProbs(model, xInput):
+    return model.predict_proba(xInput)[0]
+
+"""
+Predicts the equivalence class of users, with the provided algorithm given a model
+
+It's easier to use this method by passing a model instead of expecting to pass
+very specific data.
+"""
+def predict(model, xInput, equivClass=equiv.Equivs.JUMP, dataset="worldbuilding",
+                returnProbs=False, probs=None):
+    probs = predictProbs(model, xInput) if probs is None else probs
+
+    results = None
+
+    if equivClass == equiv.Equivs.JUMP:
+        results = equiv.jumpy(dataset, probs)
+    elif equivClass == equiv.Equivs.SCORE_DIST:
+        results = equiv.scoreDistri(dataset, probs)
+    elif equivClass == equiv.Equivs.PERCENTILES:
+        results = equiv.userCentiles(dataset, probs)
+
+    if returnProbs:
+        return results, probs
+    else:
+        return results
+
+"""
+Experimental method to predict the equivalence class of users
+
+Unlike the non-experimental version, this uses the experimental equiv class
+methods to return the accuracies instead of the predicted class.
+"""
+def expPredict(model, xTest, yTest, equivClass=equiv.Equivs.JUMP, dataset="worldbuilding", individual=False,
+                returnProbs=False):
+    probs = model.predict_proba(xTest)
+
+    results = None
+
+    if equivClass == equiv.Equivs.JUMP:
+        results = equiv.jumpyExperimental(probs, yTest, dataset=dataset, individual=individual)
+    elif equivClass == equiv.Equivs.SCORE_DIST:
+        results = equiv.scoreDistriExperimental(probs, yTest, dataset=dataset, individual=individual)
+    elif equivClass == equiv.Equivs.PERCENTILES:
+        results = equiv.userCentilesExperimental(probs, yTest, dataset=dataset, individual=individual)
+
+    if returnProbs:
+        return results, probs
+    else:
+        return results

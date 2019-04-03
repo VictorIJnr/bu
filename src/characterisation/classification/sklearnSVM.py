@@ -1,5 +1,7 @@
 import numpy as np
 
+import characterisation.classification.sklearnHelper as skh
+
 from argparse import ArgumentParser
 from pprint import pprint
 
@@ -53,6 +55,7 @@ def initSVM(trainX, trainY, paramDist=None, loadModel=False, searchNum=5, fullSe
         try:
             classy = loadSVM()
         except:
+            # Create a new SVM from scratch
             return initSVM(trainX, trainY, searchNum=searchNum, fullSearch=fullSearch, verbose=verbose)
     else:
         if fullSearch:
@@ -70,7 +73,7 @@ Predicts the user directly from the SVM input. Does not use equiv classes.
 Solely returns the probabilities for each of the trained user classes
 """
 def predictProbs(model, xInput):
-    return model.predict_proba(xInput)[0]
+    return skh.predictProbs(model, xInput)
 
 """
 Predicts the equivalence class of users, with the provided algorithm given a model
@@ -80,21 +83,7 @@ very specific data.
 """
 def predict(model, xInput, equivClass=Equivs.JUMP, dataset="worldbuilding",
                 returnProbs=False, probs=None):
-    probs = predictProbs(model, xInput) if probs is None else probs
-
-    results = None
-
-    if equivClass == Equivs.JUMP:
-        results = jumpy(dataset, probs)
-    elif equivClass == Equivs.SCORE_DIST:
-        results = scoreDistri(dataset, probs)
-    elif equivClass == Equivs.PERCENTILES:
-        results = userCentiles(dataset, probs)
-
-    if returnProbs:
-        return results, probs
-    else:
-        return results
+    return skh.predict(model, xInput, equivClass, dataset, returnProbs, probs)
 
 """
 Experimental method to predict the equivalence class of users
@@ -104,21 +93,7 @@ methods to return the accuracies instead of the predicted class.
 """
 def expPredict(model, xTest, yTest, equivClass=Equivs.JUMP, dataset="worldbuilding", individual=False,
                 returnProbs=False):
-    probs = model.predict_proba(xTest)
-
-    results = None
-
-    if equivClass == Equivs.JUMP:
-        results = jumpyExperimental(probs, yTest, dataset=dataset, individual=individual)
-    elif equivClass == Equivs.SCORE_DIST:
-        results = scoreDistriExperimental(probs, yTest, dataset=dataset, individual=individual)
-    elif equivClass == Equivs.PERCENTILES:
-        results = userCentilesExperimental(probs, yTest, dataset=dataset, individual=individual)
-
-    if returnProbs:
-        return results, probs
-    else:
-        return results
+    return skh.expPredict(model, xTest, yTest, equivClass, dataset, returnProbs)
 
 """
 Loads a previously trained SVM model
