@@ -5,6 +5,7 @@ import pandas as pd
 import seaborn as sns
 
 from argparse import ArgumentParser
+from collections import defaultdict
 from enum import Enum
 from pprint import pprint
 
@@ -14,6 +15,12 @@ ChartType = Enum("ChartTypes", "BAR LINE")
 
 filePath = os.path.dirname(os.path.realpath(__file__))
 dataPath = os.path.join(filePath, "..", "..", "..", "expResults")
+
+"""
+Return a sutiably formatted string pertaining to the supplied feature subset.
+"""
+def formatSubsets(subset):
+    pass
 
 # * I need to determine what kind of plots I need
 # * I need a standard bar graph plotting the accuracies for each equiv class
@@ -31,10 +38,43 @@ Return a dataframe containing the accuracies of each model parameter distributio
 for each equivalence class it has.
 """
 def calcAccies(resultsDF):
-    acciesDF = pd.DataFrame()
+    # This is ugly, I know, but I want to make sure it's stored bas
+    # acciesDF = defaultdict(lambda: defaultdict(lambda: None))
+    acciesDF = []
 
+    equivs = set(resultsDF["Equiv Class"].values)
+
+    # Looks like I don't need to worry about forming datasets with each hyperparameter
+    # combination. Looks like the results are formed from the best performing models
+    # from the hyperparameter search.
+    for equiv in equivs:
+        equivAccies = defaultdict(lambda: 0)
+        iterDF = resultsDF[resultsDF["Equiv Class"] == equiv]
+        numRecords = iterDF.shape[0]
+
+        for _, myRow in iterDF.iterrows():
+            if myRow["Exact User Predicted"]:
+                equivAccies["Correct User Predictions"] += 1
+            if myRow["Correct Class Predicted"]:
+                equivAccies["Correct Class Predictions"] += 1
+
+        equivAccies["Equiv Class"] = equiv
+        equivAccies["User Accuracy"] = 100 * equivAccies["Correct User Predictions"] / numRecords
+        equivAccies["Equiv Class Accuracy"] = 100 * equivAccies["Correct Class Predictions"] / numRecords
+        equivAccies["User Accuracy String"] = f"{100 * equivAccies['Correct User Predictions'] / numRecords:.5f}%"
+        equivAccies["Equiv Class Accuracy String"] = f"{100 * equivAccies['Correct Class Predictions'] / numRecords:.5f}%"
+
+        equivAccies = dict(equivAccies)
+        acciesDF.append(equivAccies)
+        print(equivAccies)
+
+    acciesDF = pd.DataFrame(acciesDF)
     return acciesDF
 
+"""
+Automatically plots all of the graphs as per the accuracies of the
+generated probabilities.
+"""
 def plot(myArgs):
     sns.set_style('whitegrid')
 
@@ -44,10 +84,15 @@ def plot(myArgs):
         dirPath = os.path.join(dataPath, myDir)
         print(dirPath)
 
-        resultsDF = pd.read_csv(os.path.join(dirPath, "Results.csv"))
-        acciesDF = calcAccies(resultsDF)
 
-        plotAccies(acciesDF)
+        resultsDF = pd.read_csv(os.path.join(dirPath, "Results.csv"))
+        resultsDF.drop(list(resultsDF.filter(regex="Unnamed*")), axis=1, inplace=True)
+        acciesDF = calcAccies(resultsDF)
+        
+        if "Stoppies" in dirPath:
+            pprint(resultsDF)
+
+        plotAccies(acciesDF, myDir)
 
         #Get the path and join each of the files in the directory 
 
@@ -67,8 +112,12 @@ def plot(myArgs):
 Plot the graphs relating to the accuracy of equivalence class predictions 
 and user predictions.
 """
-def plotAccies(acciesDF, chartType=ChartType.BAR):
-    pass
+def plotAccies(acciesDF, featureSubset, chartType=ChartType.BAR):
+    plotTitle = f"Equivalence Class Accuracy for the {featureSubset} Subset of Features"
+
+    plotti = sns.barplot(x="Equiv Class", y="Equiv Class Accuracy", data=acciesDF)\
+        .set_title(plotTitle)
+    plt.show()
 
 if __name__ == "__main__":
     myParser = ArgumentParser()
