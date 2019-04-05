@@ -1,4 +1,5 @@
 import os
+import re
 
 #pylint: disable=import-error
 import pandas as pd
@@ -20,7 +21,17 @@ dataPath = os.path.join(filePath, "..", "..", "..", "expResults")
 Return a sutiably formatted string pertaining to the supplied feature subset.
 """
 def formatSubsets(subset):
-    pass
+    if subset == "Stop_Rich_AvgWords":
+        return "Complete"
+    else:
+        subset = re.sub("Words", "", subset)
+        subset = re.sub("Stoppies", "Stop-Words", subset)
+        subset = re.sub("Stop_", "Stop-Words & ", subset)
+        subset = re.sub("Rich$", "Richness", subset)
+        subset = re.sub("Rich_", "Richness & ", subset)
+        subset = re.sub("Avg", "Averages", subset)
+
+        return subset
 
 # * I need to determine what kind of plots I need
 # * I need a standard bar graph plotting the accuracies for each equiv class
@@ -29,6 +40,8 @@ def formatSubsets(subset):
 # * This would plot the relation between equiv class size and class prediction accuracy
 # ? Maybe I could have a plot for the distribution of user classes being predicted
 # * So just say that user 10364 is predicted 528 times etc. or something
+# ! I should also plot the user predicted accuracy for each of the feature sets
+# * They'll be compared to one another as well.
 
 """
 Calculate the accuracy for each of the equivalence classes. Additionally calculate the
@@ -53,10 +66,14 @@ def calcAccies(resultsDF):
         numRecords = iterDF.shape[0]
 
         for _, myRow in iterDF.iterrows():
+            # Just making sure it's initialised and doesn't get overriden
+            equivAccies[f"Correct Class Size {myRow['Class Size']}"] = equivAccies[f"Correct Class Size {myRow['Class Size']}"]
+
             if myRow["Exact User Predicted"]:
                 equivAccies["Correct User Predictions"] += 1
             if myRow["Correct Class Predicted"]:
                 equivAccies["Correct Class Predictions"] += 1
+                equivAccies[f"Correct Class Size {myRow['Class Size']}"] += 1
 
         equivAccies["Equiv Class"] = equiv
         equivAccies["User Accuracy"] = 100 * equivAccies["Correct User Predictions"] / numRecords
@@ -77,6 +94,7 @@ generated probabilities.
 """
 def plot(myArgs):
     sns.set_style('whitegrid')
+    allDFs = []
 
     resultDirs = list(os.walk(dataPath))[0][1]
 
@@ -84,15 +102,16 @@ def plot(myArgs):
         dirPath = os.path.join(dataPath, myDir)
         print(dirPath)
 
-
         resultsDF = pd.read_csv(os.path.join(dirPath, "Results.csv"))
         resultsDF.drop(list(resultsDF.filter(regex="Unnamed*")), axis=1, inplace=True)
         acciesDF = calcAccies(resultsDF)
-        
-        if "Stoppies" in dirPath:
-            pprint(resultsDF)
+        acciesDF["Feature Set"] = myDir
+
+        print(formatSubsets(myDir))
 
         plotAccies(acciesDF, myDir)
+
+        allDFs.append(acciesDF)
 
         #Get the path and join each of the files in the directory 
 
@@ -113,11 +132,20 @@ Plot the graphs relating to the accuracy of equivalence class predictions
 and user predictions.
 """
 def plotAccies(acciesDF, featureSubset, chartType=ChartType.BAR):
-    plotTitle = f"Equivalence Class Accuracy for the {featureSubset} Subset of Features"
+    plotTitle = f"Equivalence Class Accuracy for the {formatSubsets(featureSubset)} Subset of Features"
 
-    plotti = sns.barplot(x="Equiv Class", y="Equiv Class Accuracy", data=acciesDF)\
-        .set_title(plotTitle)
-    plt.show()
+    if chartType == ChartType.BAR:
+        plotti = sns.barplot(x="Equiv Class", y="Equiv Class Accuracy", data=acciesDF)\
+            .set_title(plotTitle)
+    plotti.get_figure().savefig(os.path.join(dataPath, featureSubset, "Accuracy Chart.png"))
+
+"""
+Plot the graphs showing the relationship between equivalence class sizes and accuracy
+"""
+def plotSizes(sizesDF, featureSubset):
+    plotTitle = f"Equivalence Class Size-Accuracy Relationship"
+
+    
 
 if __name__ == "__main__":
     myParser = ArgumentParser()
