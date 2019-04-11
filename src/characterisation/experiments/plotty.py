@@ -42,6 +42,7 @@ def formatSubsets(subset):
 # * So just say that user 10364 is predicted 528 times etc. or something
 # ! I should also plot the user predicted accuracy for each of the feature sets
 # * They'll be compared to one another as well.
+# ! Plot precision and recall
 
 """
 Calculate the accuracy for each of the equivalence classes. Additionally calculate the
@@ -66,6 +67,9 @@ def calcAccies(resultsDF):
         numRecords = iterDF.shape[0]
 
         for _, myRow in iterDF.iterrows():
+            # ? I might want a count of how many times each class size is encountered
+            # ? so not just how many times they are correct.
+
             # Just making sure it's initialised and doesn't get overriden
             equivAccies[f"Correct Class Size {myRow['Class Size']}"] = equivAccies[f"Correct Class Size {myRow['Class Size']}"]
 
@@ -80,13 +84,33 @@ def calcAccies(resultsDF):
         equivAccies["Equiv Class Accuracy"] = 100 * equivAccies["Correct Class Predictions"] / numRecords
         equivAccies["User Accuracy String"] = f"{100 * equivAccies['Correct User Predictions'] / numRecords:.5f}%"
         equivAccies["Equiv Class Accuracy String"] = f"{100 * equivAccies['Correct Class Predictions'] / numRecords:.5f}%"
+        equivAccies["Record Count"] = numRecords
 
         equivAccies = dict(equivAccies)
         acciesDF.append(equivAccies)
-        print(equivAccies)
+        print(f"{equivAccies['Equiv Class']}: {equivAccies['Equiv Class Accuracy String']}")
+        # print(equivAccies["Equiv Class Accuracy String"])
 
+    print(f"User Accuracy: {acciesDF[0]['User Accuracy String']}")
     acciesDF = pd.DataFrame(acciesDF)
     return acciesDF
+
+"""
+Given the dataframe made from the user and equivalence class accuracies for a single model, 
+make a new dataframe focused on equivalence classes. This new DF should allow for showing the 
+relationship between attributes like class size to accuracy.
+"""
+def calcEquivs(resultsDF):
+    # * Sum up the correct counts for each class size and calculate the accuracy.
+
+    print(completeDF.columns)
+
+    filtSizesDF = completeDF.drop(list(completeDF.filter(regex="String|User")), axis=1)
+    # filtSizesDF = completeDF.filter(regex="Correct Class Size (\d)+|Record Count")
+    print(filtSizesDF.columns)
+    print(filtSizesDF)
+
+    # x-axis class size, y-axis accuracy
 
 """
 Automatically plots all of the graphs as per the accuracies of the
@@ -100,20 +124,29 @@ def plot(myArgs):
 
     for myDir in resultDirs:
         dirPath = os.path.join(dataPath, myDir)
+        print(formatSubsets(myDir))
         print(dirPath)
 
         resultsDF = pd.read_csv(os.path.join(dirPath, "Results.csv"))
         resultsDF.drop(list(resultsDF.filter(regex="Unnamed*")), axis=1, inplace=True)
         acciesDF = calcAccies(resultsDF)
         acciesDF["Feature Set"] = myDir
-
-        print(formatSubsets(myDir))
+        acciesDF.fillna(0, inplace=True, axis=1)
 
         plotAccies(acciesDF, myDir)
 
         allDFs.append(acciesDF)
+        print()
 
-        #Get the path and join each of the files in the directory 
+
+    completeDF = pd.DataFrame().append(allDFs)
+    completeDF.fillna(0, inplace=True)
+
+    calcEquivs(completeDF)
+    plotCorr(completeDF)
+
+    # print(completeDF)
+    # print(completeDF.columns)
 
     # pprint(acciesDF[acciesDF["Equivalence Method"] == "JUMP"])
 
@@ -133,6 +166,7 @@ and user predictions.
 """
 def plotAccies(acciesDF, featureSubset, chartType=ChartType.BAR):
     plotTitle = f"Equivalence Class Accuracy for the {formatSubsets(featureSubset)} Subset of Features"
+    plotti = None
 
     if chartType == ChartType.BAR:
         plotti = sns.barplot(x="Equiv Class", y="Equiv Class Accuracy", data=acciesDF)\
@@ -140,12 +174,35 @@ def plotAccies(acciesDF, featureSubset, chartType=ChartType.BAR):
     plotti.get_figure().savefig(os.path.join(dataPath, featureSubset, "Accuracy Chart.png"))
 
 """
+Determines the correlation between the accuracies for each of the equivalence class
+algorithms and the user accuracy. The result is subsequently plotted. 
+"""
+def plotCorr(completeDF):
+    filtAccies = completeDF.filter(regex="Accuracy$|Equiv Class$")
+    equivs = set(filtAccies["Equiv Class"].values)
+
+    # ? Makes a seaborn correlation plot for each equiv class
+    for equiv in equivs:
+        plt.clf()
+        equivSubset = filtAccies[filtAccies["Equiv Class"] == equiv]
+
+        plotti = sns.heatmap(equivSubset.drop("Equiv Class", axis=1).corr())\
+            .set_title(f"Correlation for the {equiv} equivalence class")
+        plotti.get_figure().savefig(os.path.join(dataPath, f"{equiv}_Correlation.png"))
+
+"""
 Plot the graphs showing the relationship between equivalence class sizes and accuracy
 """
-def plotSizes(sizesDF, featureSubset):
+def plotSizes(sizesDF, featureSubset, chartType=ChartType.BAR):
     plotTitle = f"Equivalence Class Size-Accuracy Relationship"
+    plotti = None
 
+    if chartType == ChartType.BAR:
+        plotti = sns.barplot(x="Class Size", y="Equiv Class Accuracy", data=sizesDF)\
+            .set_title(plotTitle)
     
+    plt.show()
+
 
 if __name__ == "__main__":
     myParser = ArgumentParser()

@@ -1,3 +1,4 @@
+#pylint: disable=import-error
 import numpy as np
 
 from keras.layers import Input, Dense, Conv1D, MaxPooling1D, UpSampling1D
