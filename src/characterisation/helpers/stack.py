@@ -49,8 +49,6 @@ def preRestriction(df, commentDF, limit=5, myDataset=dataset):
     try:
         #Load a pre-filtered dataset if it exists
         print("Attempting to use cached prefiltered dataset...")
-        print(dataset.split('.')[0])
-        print(myDataset.split('.')[0])
         userDict = fileIO.loadJSON(f"preRestrict_{myDataset.split('.')[0]}.json")
     except FileNotFoundError:
         #If it didn't exist, build it
