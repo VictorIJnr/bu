@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 
+import characterisation.classification.sklearnHelper as skh
+
 from collections import defaultdict
 from enum import Enum
 from pprint import pprint
-
-from characterisation.classification.sklearnHelper import filteredMap
 
 Equivs = Enum("Equivs", "JUMP SCORE_DIST PERCENTILES")
 
@@ -18,7 +18,7 @@ dataset - the dataset which was trained on
           currently a string but should be changed to an enum sometime
 """
 def jumpy(dataset, classPreds, filteredIDs=None):
-    filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
+    filteredIDs = list(skh.filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
 
     userMap = makeUserMap(dataset, classPreds)
 
@@ -60,7 +60,7 @@ def scoreDistri(dataset, classPreds, percentile=90):
 User Percentiles equivalence class method.
 """
 def userCentiles(dataset, classPreds, percentile=90, filteredIDs=None):
-    filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
+    filteredIDs = list(skh.filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
     numUsers = int(round(len(filteredIDs) * (1 / (100 - percentile))))
 
     # Mapping each userID to their corresponding probabilities
@@ -82,7 +82,7 @@ the individual (user) accuracy and class accuracy of a model, upon a set of pred
 def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding", individual=False):
     claccuracy = 0
     indAccuracy = 0
-    filteredIDs = list(filteredMap(dataset=dataset).keys())
+    filteredIDs = list(skh.filteredMap(dataset=dataset).keys())
     
     equivClasses = []
     experimentDF = []
@@ -193,7 +193,7 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
     claccuracy = 0
     indAccuracy = 0
 
-    filteredIDs = list(filteredMap(dataset=dataset).keys())
+    filteredIDs = list(skh.filteredMap(dataset=dataset).keys())
 
     equivClasses = []
     experimentDF = []
@@ -255,5 +255,5 @@ def keyFromValue(myDict, searchValue):
 Maps each userID to their corresponding probabilities
 """
 def makeUserMap(dataset, predictedProbs):
-    filteredIDs = list(filteredMap(dataset=dataset).keys())
+    filteredIDs = list(skh.filteredMap(dataset=dataset).keys())
     return {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}
