@@ -28,7 +28,7 @@ def cleanBody(df, index, row):
     cleaner = re.compile("<.*?>|\r?\n|\r")
     df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
-def restrict(df, commentDF, limit=5, myDataset=dataset):
+def restrict(df, commentDF, limit=5, myDataset=9777):
     userDict = preRestriction(df, commentDF, limit, myDataset)
     # userDict = miniPreRestriction(df)
 
