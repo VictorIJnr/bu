@@ -28,8 +28,8 @@ def cleanBody(df, index, row):
     cleaner = re.compile("<.*?>|\r?\n|\r")
     df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
-def restrict(df, commentDF, limit=5):
-    userDict = preRestriction(df, commentDF, limit)
+def restrict(df, commentDF, limit=5, myDataset=dataset):
+    userDict = preRestriction(df, commentDF, limit, myDataset)
     # userDict = miniPreRestriction(df)
 
     initNumUsers = len(userDict)
@@ -43,13 +43,15 @@ def restrict(df, commentDF, limit=5):
 
     return newDF, userDict, initNumUsers
 
-def preRestriction(df, commentDF, limit=5):
+def preRestriction(df, commentDF, limit=5, myDataset=dataset):
     userDict = defaultdict(lambda: 0)
 
     try:
         #Load a pre-filtered dataset if it exists
         print("Attempting to use cached prefiltered dataset...")
-        userDict = fileIO.loadJSON(f"preRestrict_{dataset.split('.')[0]}.json")
+        print(dataset.split('.')[0])
+        print(myDataset.split('.')[0])
+        userDict = fileIO.loadJSON(f"preRestrict_{myDataset.split('.')[0]}.json")
     except FileNotFoundError:
         #If it didn't exist, build it
         print("Pre-existing prefiltered dataset does not exist. Building from scratch...")
@@ -79,7 +81,7 @@ def preRestriction(df, commentDF, limit=5):
                     cleanBody(df, index, row)
                     userDict[row["OwnerUserId"]] += 1
         #Saving the prefiltered dataset                    
-        fileIO.saveJSON(userDict, f"preRestrict_{dataset.split('.')[0]}.json")
+        fileIO.saveJSON(userDict, f"preRestrict_{myDataset.split('.')[0]}.json")
     else:
         print("Cached prefiltered dataset located...")
     
@@ -125,9 +127,13 @@ def execRestrict(myDataset, limit=rowLimit):
     allPosts = None
     allComments = None
 
+    execDataset = None
+
     if myDataset == "worldbuilding":
+        execDataset = worldbuilding
         dataset = worldbuilding
     elif myDataset == "serverfault":
+        execDataset = serverfault
         dataset = serverfault
 
     print("Loading data into dataframe...")
@@ -146,13 +152,14 @@ def execRestrict(myDataset, limit=rowLimit):
     else:
         print("Cached dataframe located...\n")
 
+    print(dataset.split('.')[0])
     print(f"Initial number of Posts:\t{allPosts.shape[0]}")
 
     #! Uncomment this when I'm done getting output for the report
-    #// newPosts, _, _ = restrict(allPosts, allComments)
+    #// newPosts, _, _ = restrict(allPosts, allComments, myDataset=execDataset)
 
     #! The following line is just for my report
-    newPosts, userDict, initNumUsers = restrict(allPosts, allComments)    
+    newPosts, userDict, initNumUsers = restrict(allPosts, allComments, myDataset=execDataset)    
 
     newPosts = newPosts[:limit] if limit is not None else newPosts
     savePath = "miniRestrictedPosts.csv" if limit is not None else "RestrictedPosts.csv"

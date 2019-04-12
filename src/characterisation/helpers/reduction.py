@@ -89,7 +89,7 @@ def initEncoder(trainShape, factor=4):
     #Deep AutoEncoding, scaling down by factor over the course of 4 layers
     #16 is just a hyper-parameter for the number of time steps in the ConvNet
     inputLayer = Input(shape=(numFeatures, 1))
-    xEnc = Conv1D(8, 4, activation="relu", padding="same")(inputLayer)
+    xEnc = Conv1D(8, 4z, activation="relu", padding="same")(inputLayer)
     print(f"\n1st Conv, xEnc Shape: {xEnc.shape}")
     xEnc = MaxPooling1D(int(factor ** 0.5), padding="same")(xEnc)
     print(f"1st Max Pooling, xEnc Shape: {xEnc.shape}")

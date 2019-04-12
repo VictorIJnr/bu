@@ -70,14 +70,10 @@ def calcAccies(resultsDF):
             # ? I might want a count of how many times each class size is encountered
             # ? so not just how many times they are correct.
 
-            # Just making sure it's initialised and doesn't get overriden
-            equivAccies[f"Correct Class Size {myRow['Class Size']}"] = equivAccies[f"Correct Class Size {myRow['Class Size']}"]
-
             if myRow["Exact User Predicted"]:
                 equivAccies["Correct User Predictions"] += 1
             if myRow["Correct Class Predicted"]:
                 equivAccies["Correct Class Predictions"] += 1
-                equivAccies[f"Correct Class Size {myRow['Class Size']}"] += 1
 
         equivAccies["Equiv Class"] = equiv
         equivAccies["User Accuracy"] = 100 * equivAccies["Correct User Predictions"] / numRecords
@@ -96,27 +92,10 @@ def calcAccies(resultsDF):
     return acciesDF
 
 """
-Given the dataframe made from the user and equivalence class accuracies for a single model, 
-make a new dataframe focused on equivalence classes. This new DF should allow for showing the 
-relationship between attributes like class size to accuracy.
-"""
-def calcEquivs(resultsDF):
-    # * Sum up the correct counts for each class size and calculate the accuracy.
-
-    print(completeDF.columns)
-
-    filtSizesDF = completeDF.drop(list(completeDF.filter(regex="String|User")), axis=1)
-    # filtSizesDF = completeDF.filter(regex="Correct Class Size (\d)+|Record Count")
-    print(filtSizesDF.columns)
-    print(filtSizesDF)
-
-    # x-axis class size, y-axis accuracy
-
-"""
 Automatically plots all of the graphs as per the accuracies of the
 generated probabilities.
 """
-def plot(myArgs):
+def plot():
     sns.set_style('whitegrid')
     allDFs = []
 
@@ -133,32 +112,19 @@ def plot(myArgs):
         acciesDF["Feature Set"] = myDir
         acciesDF.fillna(0, inplace=True, axis=1)
 
+        if myDir == "AveragesWords":
+            print(f"DF Cols: {resultsDF.columns}")
+
         plotAccies(acciesDF, myDir)
+        plotEquivs(resultsDF, myDir)
 
         allDFs.append(acciesDF)
         print()
 
-
     completeDF = pd.DataFrame().append(allDFs)
     completeDF.fillna(0, inplace=True)
 
-    calcEquivs(completeDF)
     plotCorr(completeDF)
-
-    # print(completeDF)
-    # print(completeDF.columns)
-
-    # pprint(acciesDF[acciesDF["Equivalence Method"] == "JUMP"])
-
-    # #Plot the relationship between class accuracy and class size
-    # plotti = sns.scatterplot(x="kernel", y="Class Accuracy", hue="Equivalence Method", data=acciesDF) \
-    #             .set_title("Relation between class accuracy and SVM Kernel")
-    # # plotti = sns.violinplot(x="Equivalence Method", y="Class Accuracy", data=acciesDF) \
-    #     # .set_title("Comparision between equivalence class methods")
-    # # plotti = sns.violinplot(x="" data=acciesDF)
-    # # plotti = sns.heatmap(acciesDF.corr()).set_title("Correlation between class accuracy and user accuracy")
-
-    # plt.show()
 
 """
 Plot the graphs relating to the accuracy of equivalence class predictions 
@@ -167,6 +133,8 @@ and user predictions.
 def plotAccies(acciesDF, featureSubset, chartType=ChartType.BAR):
     plotTitle = f"Equivalence Class Accuracy for the {formatSubsets(featureSubset)} Subset of Features"
     plotti = None
+
+    plt.clf() # ! Clearing plots so they don't overlap
 
     if chartType == ChartType.BAR:
         plotti = sns.barplot(x="Equiv Class", y="Equiv Class Accuracy", data=acciesDF)\
@@ -183,7 +151,7 @@ def plotCorr(completeDF):
 
     # ? Makes a seaborn correlation plot for each equiv class
     for equiv in equivs:
-        plt.clf()
+        plt.clf() # ! Clearing plots so they don't overlap
         equivSubset = filtAccies[filtAccies["Equiv Class"] == equiv]
 
         plotti = sns.heatmap(equivSubset.drop("Equiv Class", axis=1).corr())\
@@ -191,24 +159,86 @@ def plotCorr(completeDF):
         plotti.get_figure().savefig(os.path.join(dataPath, f"{equiv}_Correlation.png"))
 
 """
-Plot the graphs showing the relationship between equivalence class sizes and accuracy
+Given the dataframe made from the user and equivalence class accuracies for a single model, 
+make a new dataframe focused on equivalence classes. This new DF should allow for showing the 
+relationship between attributes like class size to accuracy.
 """
-def plotSizes(sizesDF, featureSubset, chartType=ChartType.BAR):
-    plotTitle = f"Equivalence Class Size-Accuracy Relationship"
-    plotti = None
+def plotEquivs(resultsDF, featureSubset):
+    # * Sum up the correct counts for each class size and calculate the accuracy.
+    plotTitle = f"Equivalence Class Size-Accuracy Relationship ({formatSubsets(featureSubset)} Subset)"
+    allAccies = []
+    sizesDF = []
 
-    if chartType == ChartType.BAR:
-        plotti = sns.barplot(x="Class Size", y="Equiv Class Accuracy", data=sizesDF)\
-            .set_title(plotTitle)
+    plt.clf() # ! Clearing plots so they don't overlap
+
+    equivs = set(resultsDF["Equiv Class"].values)
+    for equiv in equivs:
+        classAccies = defaultdict(lambda: 0)
+        iterDF = resultsDF[resultsDF["Equiv Class"] == equiv]
+
+        print(f"PlotEquivs - Iter DF Shape: {iterDF.shape}")
+
+        for _, myRow in iterDF.iterrows():
+            if myRow["Correct Class Predicted"]:
+                classAccies[f"Correct Class Size {myRow['Class Size']} Predictions"] += 1
+            else:
+                classAccies[f"Incorrect Class Size {myRow['Class Size']} Predictions"] += 1
+
+        classAccies["Equiv Class"] = equiv
+
+        # Getting all the unique class sizes
+        classSizes = set([int(keySplit) for myKey in classAccies.keys()\
+                            for keySplit in myKey.split() if keySplit.isdigit()])
+
+        for size in classSizes:
+            sizeDict = defaultdict(lambda: 0)
+
+            correctRegex = re.compile(f"Correct Class Size {size} Predictions")
+            incorrectRegex = re.compile(f"Incorrect Class Size {size} Predictions")
+
+            # Making sure both entries are initialised
+            classAccies[f"Correct Class Size {size} Predictions"]\
+                = classAccies[f"Correct Class Size {size} Predictions"]
+            classAccies[f"Incorrect Class Size {size} Predictions"]\
+                = classAccies[f"Incorrect Class Size {size} Predictions"]
+            
+            numCorrect = classAccies[list(filter(correctRegex.match, classAccies.keys()))[0]]
+            numIncorrect = classAccies[list(filter(incorrectRegex.match, classAccies.keys()))[0]]
+
+            classAccies[f"Class Size {size} Accuracy"] = 100 * numCorrect / (numCorrect + numIncorrect)
+            
+            sizeDict["Equiv Class"] = equiv
+            sizeDict["Class Size"] = size
+            sizeDict["Class Count"] = numCorrect + numIncorrect
+            sizeDict["Accuracy"] = 100 * numCorrect / (numCorrect + numIncorrect)
+
+            sizesDF.append(dict(sizeDict))
+        allAccies.append(dict(classAccies))
     
-    plt.show()
+    sizesDF = pd.DataFrame(sizesDF)
+    
+    if featureSubset == "Stop_Rich_AvgWords":
+        print(sizesDF)
 
+    # plotti = sns.scatterplot(x="Class Size", y="Accuracy", hue="Equiv Class", data=sizesDF)\
+    #   .set_title(plotTitle)
+    # plotti.savefig(os.path.join(dataPath, featureSubset, "SizeAccuracy.png"))
+    
+    # ? Plotting a line of best fit on a scatter graph
+    # //plotti = sns.lmplot(x="Class Size", y="Accuracy", data=sizesDF)
+    
+    # //plt.title(plotTitle)
+    # //plt.xlim(0, None)
+    # //plt.ylim(0, None)
+
+    # //myFig = plt.gcf()
+    # //myFig.set_size_inches(10, 7.5)
+
+    # //myFig.savefig(os.path.join(dataPath, featureSubset, "SizeAccuracyLOBF.png"))
+
+    plotti = sns.lineplot(x="Class Size", y="Class Count", hue="Equiv Class", data=sizesDF)\
+        .set_title("Class Size Occurrences")
+    plotti.get_figure().savefig(os.path.join(dataPath, featureSubset, "SizeOccurrences.png"))
 
 if __name__ == "__main__":
-    myParser = ArgumentParser()
-
-    myParser.add_argument("--dataFile", help="The data file to plot into a graph.")
-
-    myArgs = myParser.parse_args()
-
-    plot(myArgs)
+    plot()
