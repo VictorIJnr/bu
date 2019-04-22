@@ -141,6 +141,45 @@ def runExtraction(fileName):
     print(f"Debug xTract {os.path.join(dataset, fileName)}")
     execXtract(os.path.join(dataset, fileName))
 
+def extractText(textBody):
+    doc = spacy(textBody)
+    wordCounts = getWordCounts(doc)
+    rowDict = defaultdict(lambda: None)
+
+    numWords = totalNumWords(doc)
+    
+    #Adding features to a dict for CSV storage
+    rowDict["userID"] = -1
+    rowDict["postID"] = -1
+    rowDict["numWords"] = numWords
+    rowDict["numChars"] = totalNumChars(doc)
+    rowDict["yule"] = yuleify(wordCounts)
+    rowDict["avgSentenceWords"] = avgSentenceWords(doc)
+    rowDict["avgSentenceChars"] = avgSentenceChars(doc)
+
+    #Don't you love division by 0?
+    numWords = 1 if numWords == 0 else numWords
+
+    #These are essentially meta-frequencies
+    #So counting the number of words that appear once, twice, 3, 4, and 5 times
+    rowDict["legoHapax"] = legomena(wordCounts)
+    rowDict["legoDis"] = legomena(wordCounts, 2)
+    rowDict["legoTris"] = legomena(wordCounts, 3)
+    rowDict["legoTetrakis"] = legomena(wordCounts, 4)
+    rowDict["legoPentakis"] = legomena(wordCounts, 5)
+
+    #Putting all of the stop words as individual features
+    stoppies = stopWordFreq(wordCounts)
+    for stopWord, freq in stoppies.items():
+        rowDict[f"stop-{stopWord}"] = freq / numWords
+
+    xTracted = pd.DataFrame([rowDict])
+
+    normalizeCols(xTracted, ["legoHapax", "legoDis", "legoTris", "legoTetrakis", "legoPentakis",
+        "avgSentenceChars", "avgSentenceWords", "numChars", "numWords", "yule"])
+
+    return xTracted.iloc[0]
+
 def execXtract(fileName):
     dfCols = ["userID", "postID", "metaFreq", "numWords", "numChars", "yule",
                 "hapaxLego", "disLego", "trisLego", "avgSentenceWords",

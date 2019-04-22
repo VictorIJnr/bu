@@ -1,8 +1,6 @@
 import numpy as np
 import pandas as pd
 
-import characterisation.classification.sklearnHelper as skh
-
 from collections import defaultdict
 from enum import Enum
 from pprint import pprint
@@ -18,7 +16,9 @@ dataset - the dataset which was trained on
           currently a string but should be changed to an enum sometime
 """
 def jumpy(dataset, classPreds, filteredIDs=None):
-    filteredIDs = list(skh.filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
+    from characterisation.classification.sklearnHelper import filteredMap
+
+    filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
 
     userMap = makeUserMap(dataset, classPreds)
 
@@ -60,7 +60,9 @@ def scoreDistri(dataset, classPreds, percentile=90):
 User Percentiles equivalence class method.
 """
 def userCentiles(dataset, classPreds, percentile=90, filteredIDs=None):
-    filteredIDs = list(skh.filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
+    from characterisation.classification.sklearnHelper import filteredMap
+
+    filteredIDs = list(filteredMap(dataset=dataset).keys()) if filteredIDs is None else filteredIDs
     numUsers = int(round(len(filteredIDs) * (1 / (100 - percentile))))
 
     # Mapping each userID to their corresponding probabilities
@@ -80,9 +82,11 @@ Using the jump-point equivalence class method; with a set of test data, determin
 the individual (user) accuracy and class accuracy of a model, upon a set of predictions
 """
 def jumpyExperimental(classPreds, targetIndeces, dataset="worldbuilding", individual=False):
+    from characterisation.classification.sklearnHelper import filteredMap
+
     claccuracy = 0
     indAccuracy = 0
-    filteredIDs = list(skh.filteredMap(dataset=dataset).keys())
+    filteredIDs = list(filteredMap(dataset=dataset).keys())
     
     equivClasses = []
     experimentDF = []
@@ -190,10 +194,12 @@ i.e. the 90th percentile of users when sorted by their scores
 """
 def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=False, dataset="worldbuilding",
                                 individual=False):
+    from characterisation.classification.sklearnHelper import filteredMap     
+
     claccuracy = 0
     indAccuracy = 0
 
-    filteredIDs = list(skh.filteredMap(dataset=dataset).keys())
+    filteredIDs = list(filteredMap(dataset=dataset).keys())
 
     equivClasses = []
     experimentDF = []
@@ -249,11 +255,16 @@ def userCentilesExperimental(classPreds, targetIndeces, percentile=90, verbose=F
         return claccuracy, indAccuracy, equivClasses
 
 def keyFromValue(myDict, searchValue):
+    print(searchValue)
+    print(myDict.values())
+
     return list(myDict.keys())[list(myDict.values()).index(searchValue)]
 
 """
 Maps each userID to their corresponding probabilities
 """
 def makeUserMap(dataset, predictedProbs):
-    filteredIDs = list(skh.filteredMap(dataset=dataset).keys())
+    from characterisation.classification.sklearnHelper import filteredMap
+
+    filteredIDs = list(filteredMap(dataset=dataset).keys())
     return {userID: prob for userID, prob in zip(filteredIDs, predictedProbs)}

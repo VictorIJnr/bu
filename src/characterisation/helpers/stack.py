@@ -28,7 +28,7 @@ def cleanBody(df, index, row):
     cleaner = re.compile("<.*?>|\r?\n|\r")
     df.at[index, "Body"] = re.sub(cleaner, "", str(oldBody))
 
-def restrict(df, commentDF, limit=5, myDataset=9777):
+def restrict(df, commentDF, limit=5, myDataset=dataset):
     userDict = preRestriction(df, commentDF, limit, myDataset)
     # userDict = miniPreRestriction(df)
 
@@ -122,6 +122,8 @@ def main():
 Filters a dataset to only include users which have reached a provided threshold
 """
 def execRestrict(myDataset, limit=rowLimit):
+    global dataset
+
     allPosts = None
     allComments = None
 
@@ -157,7 +159,7 @@ def execRestrict(myDataset, limit=rowLimit):
     #// newPosts, _, _ = restrict(allPosts, allComments, myDataset=execDataset)
 
     #! The following line is just for my report
-    newPosts, userDict, initNumUsers = restrict(allPosts, allComments, myDataset=execDataset)    
+    newPosts, userDict, initNumUsers = restrict(allPosts, allComments)    
 
     newPosts = newPosts[:limit] if limit is not None else newPosts
     savePath = "miniRestrictedPosts.csv" if limit is not None else "RestrictedPosts.csv"

@@ -18,7 +18,7 @@ RUN python -m spacy download en
 #I just really wanted less
 RUN apt-get update
 RUN apt-get install less
-RUN cd src
+RUN cd bu/src
 
 #This is the "exec" form, it's preferred but I like the "shell form" (the one I use) more
 # ENTRYPOINT ["bash"]

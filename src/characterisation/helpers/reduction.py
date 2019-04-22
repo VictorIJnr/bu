@@ -115,11 +115,17 @@ def initDecoder(trainShape, factor=4):
 
     #4 is just calculated from performing the encoding reduction from 16
     inputLayer = Input(shape=(reducedSize, 4))
+    print(f"\nInput, xDec Shape: {inputLayer.shape}")
     xDec = Conv1D(4, 4, activation="relu", padding="same")(inputLayer)
+    print(f"1st Conv, xDec Shape: {xDec.shape}")
     xDec = UpSampling1D(int(factor ** 0.5))(xDec)
+    print(f"1st Sample, xDec Shape: {xDec.shape}")
     xDec = Conv1D(8, 4, activation="relu", padding="same")(xDec)
+    print(f"2nd Conv, xDec Shape: {xDec.shape}")
     xDec = UpSampling1D(int(factor ** 0.5))(xDec)
+    print(f"2nd Sample, xDec Shape: {xDec.shape}")
     xDec = Conv1D(1, 4, activation="relu", padding="same")(xDec)
+    print(f"3rd Conv, xDec Shape: {xDec.shape}")
 
     decoder = Model(inputLayer, xDec)
 

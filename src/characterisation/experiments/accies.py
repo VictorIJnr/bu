@@ -325,8 +325,9 @@ if __name__ == "__main__":
                         help="Generate the probabilities from scratch when experimenting.")
     myParser.add_argument("--probsOnly", default=False, action="store_true",
                         help="Only save the probabilities and don't run the experimentation.")
-    myParser.add_argument("--debug", default=False, action="store_true",
-                        help="Legit. What do you think this does?")
+    # I had this for debug things, but it's not appropriate in the final report
+    # myParser.add_argument("--debug", default=False, action="store_true",
+    #                     help="Legit. What do you think this does?")
 
     myArgs = myParser.parse_args()
 
