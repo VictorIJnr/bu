@@ -67,6 +67,8 @@ a certain part of bu. Like processing a new dataset or using a dataset to train 
 dimension reduction ConvNet.
 """
 def loadData(myDataset="worldbuilding", mini=True):
+    global dataset
+    
     #I REALLY NEED TO LEARN PYTHON ENUMS SOON
     if myDataset == "worldbuilding":
         dataset = worldbuilding

@@ -220,9 +220,9 @@ def plotEquivs(resultsDF, featureSubset):
     if featureSubset == "Stop_Rich_AvgWords":
         print(sizesDF)
 
-    # plotti = sns.scatterplot(x="Class Size", y="Accuracy", hue="Equiv Class", data=sizesDF)\
-    #   .set_title(plotTitle)
-    # plotti.savefig(os.path.join(dataPath, featureSubset, "SizeAccuracy.png"))
+    plotti = sns.scatterplot(x="Class Size", y="Accuracy", hue="Equiv Class", data=sizesDF)\
+      .set_title(plotTitle)
+    plotti.savefig(os.path.join(dataPath, featureSubset, "SizeAccuracy.png"))
     
     # ? Plotting a line of best fit on a scatter graph
     # //plotti = sns.lmplot(x="Class Size", y="Accuracy", data=sizesDF)
@@ -236,9 +236,9 @@ def plotEquivs(resultsDF, featureSubset):
 
     # //myFig.savefig(os.path.join(dataPath, featureSubset, "SizeAccuracyLOBF.png"))
 
-    plotti = sns.lineplot(x="Class Size", y="Class Count", hue="Equiv Class", data=sizesDF)\
-        .set_title("Class Size Occurrences")
-    plotti.get_figure().savefig(os.path.join(dataPath, featureSubset, "SizeOccurrences.png"))
+    # plotti = sns.lineplot(x="Class Size", y="Class Count", hue="Equiv Class", data=sizesDF)\
+    #     .set_title("Class Size Occurrences")
+    # plotti.get_figure().savefig(os.path.join(dataPath, featureSubset, "SizeOccurrences.png"))
 
 if __name__ == "__main__":
     plot()
